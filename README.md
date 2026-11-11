@@ -1,4 +1,8 @@
-# Call Journal
+# Starcall
+
+<img src="public/icons/icon-512.png" width="96" alt="Starcall logo: a rising price line that lands on a star">
+
+*Formerly Call Journal. The repository and web address still use `call-journal`.*
 
 Research any US, Hong Kong or Singapore stock, write down your call (bullish or bearish, plus why), and get graded when the check-back date comes.
 It's a practice journal for building trading judgement before real money is involved. It is not investment advice.

@@ -1,4 +1,4 @@
-# Call Journal's small server
+# Starcall's small server
 
 A free Cloudflare Worker that does two things the website can't do on its own, because GitHub Pages only hosts files:
 

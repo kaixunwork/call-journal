@@ -1,4 +1,4 @@
-// Call Journal's small server, a Cloudflare Worker.
+// Starcall's small server, a Cloudflare Worker.
 //
 //   GET  /                 health: which features are set up
 //   GET  /quotes?symbols=  live stock and option quotes from Tradier (the token stays here, never in the browser)

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import Backup from "@/components/Backup";
 import WhatsNew from "@/components/WhatsNew";
-import { BASE } from "@/lib/format";
+import Logo from "@/components/Logo";
 import { getOptIn, hasWorker, metricsSummary, setOptIn } from "@/lib/remote";
 import { LESSONS, TOTAL_MINUTES } from "@/lib/lessons";
 import { allDone, doneCount, isUnlocked, loadProgress, loadTrades, resetProgress } from "@/lib/paper";
@@ -34,7 +34,7 @@ export default function OptionsHome() {
 
       {done === 0 && (
         <section className="card intro">
-          <img src={`${BASE}/brand/logo-mark.svg`} alt="" width="48" height="48" />
+          <Logo size={44} />
           <div>
             <strong>New to options?</strong> Start with the lessons below, or read <Link href="/options/welcome/">how this works</Link> first:
             what the bot does, how it grades itself, and what it won&apos;t do.
@@ -58,7 +58,7 @@ export default function OptionsHome() {
                 {open
                   ? <Link href={`/options/lesson/?n=${i + 1}`}>{l.title}</Link>
                   : <span className="muted">{l.title}</span>}
-                <span className="small muted">{finished ? "done" : open ? `${l.minutes} min` : "🔒 finish the lesson before"}</span>
+                <span className="small muted">{finished ? "done" : open ? `${l.minutes} min` : "🔒 locked"}</span>
               </li>
             );
           })}

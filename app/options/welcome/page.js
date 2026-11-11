@@ -1,11 +1,12 @@
 import Link from "next/link";
+import Logo from "@/components/Logo";
 import "./welcome.css";
 
 // Landing page for the options course, ideas and the self-grading bot: /options/welcome/
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 export const metadata = {
-  title: "Call Journal Options: learn options, then let the bot prove itself",
+  title: "Starcall Options: learn options, then let the bot prove itself",
   description: "Seven short lessons on options, daily option ideas that follow the rules you learned, and paper trading. A bot that logs every prediction and grades itself.",
 };
 
@@ -13,7 +14,10 @@ export default function Welcome() {
   return (
     <div className="welcome">
       <section className="w-hero">
-        <img src={`${BASE}/brand/logo.svg`} alt="Call Journal Options" width="264" height="51" className="w-logo" />
+        <div className="w-brand" aria-label="Starcall Options">
+          <Logo size={52} />
+          <div><span className="wordmark">Star<span>call</span></span><div className="w-sub">Options</div></div>
+        </div>
         <h1>Learn options in 40 minutes. Then practise on ideas that show their working.</h1>
         <p className="w-lead">
           For stock investors who have never traded options. Short lessons, daily ideas on large US stocks that follow the rules you

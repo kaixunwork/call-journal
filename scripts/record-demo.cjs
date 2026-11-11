@@ -52,7 +52,7 @@ const firstResults = data.entries.filter((e) => e.hyp === first && e.predict ===
     if (!c) { c = document.createElement("div"); c.id = "card"; document.body.append(c); }
     c.style.display = "grid";
     c.innerHTML = `<div><img src="${logo}" alt="">${"<br>"}${t}<small>${s}</small></div>`;
-  }, [t, s, "/call-journal/brand/logo-mark.svg"]);
+  }, [t, s, "/call-journal/icons/icon.svg"]);
   const hideCard = () => p.evaluate(() => { document.getElementById("card").style.display = "none"; });
   const slider = p.locator("input[type=range]");
   let at = 0;
@@ -60,7 +60,7 @@ const firstResults = data.entries.filter((e) => e.hyp === first && e.predict ===
   const show = (text) => p.getByText(text, { exact: false }).first().evaluate((el) => window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - 90 }));
   const wait = (ms) => p.waitForTimeout(ms);
 
-  await card("How the bot taught itself", "A simulation of Call Journal's options bot, seen through its own paper trades");
+  await card("How the bot taught itself", "A simulation of Starcall's options bot, seen through its own paper trades");
   await wait(3500); await hideCard();
 
   await slider.fill("0"); await show("Replay:");
