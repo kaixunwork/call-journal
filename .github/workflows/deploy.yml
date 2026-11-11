@@ -130,6 +130,8 @@ jobs:
         run: npm run build
         env:
           NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          # Optional small server for live quotes and opt-in timings (see worker/README.md)
+          NEXT_PUBLIC_WORKER_URL: ${{ vars.NEXT_PUBLIC_WORKER_URL }}
 
       # ---- Dev site, from the dev branch (skipped if there is no dev branch) ----
       - id: devbranch
@@ -156,6 +158,7 @@ jobs:
           NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}/dev
           NEXT_PUBLIC_DATA_BASE: ${{ steps.pages.outputs.base_path }}
           NEXT_PUBLIC_APP_ENV: dev
+          NEXT_PUBLIC_WORKER_URL: ${{ vars.NEXT_PUBLIC_WORKER_URL }}
 
       - uses: actions/upload-pages-artifact@v3
         with:

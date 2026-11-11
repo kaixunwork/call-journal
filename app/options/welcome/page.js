@@ -31,7 +31,7 @@ export default function Welcome() {
           <li>
             <span className="w-num">1</span>
             <h3>Learn</h3>
-            <p>Seven lessons, about six minutes each: calls and puts, breakeven, what sets the price, delta, the risks, and six rules for picking an option. A quick check ends each one.</p>
+            <p>Seven lessons, about six minutes each: calls and puts, breakeven, what sets the price, delta, the risks, and seven rules for picking an option. A quick check ends each one.</p>
           </li>
           <li>
             <span className="w-num">2</span>

@@ -5,14 +5,14 @@
 //                                       the last copy is used when you're offline.
 //   Anything on another site (Anthropic API, news links): never touched.
 
-const VERSION = "v1";
+const VERSION = "v2";
 const scope = new URL(self.registration.scope).pathname; // "/call-journal/" (live) or "/call-journal/dev/"
 // Live and dev share one web address, so cache names include the scope to keep them apart
 const STATIC = `static-${VERSION}:${scope}`;
 const DYNAMIC = `dynamic-${VERSION}:${scope}`;
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(DYNAMIC).then((c) => c.addAll([scope, `${scope}calls/`, `${scope}stock/`]).catch(() => {})));
+  event.waitUntil(caches.open(DYNAMIC).then((c) => c.addAll([scope, `${scope}calls/`, `${scope}stock/`, ...["", "lesson/", "ideas/", "trades/", "bot/", "welcome/"].map((p) => `${scope}options/${p}`)]).catch(() => {})));
   self.skipWaiting();
 });
 
@@ -33,6 +33,8 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET" || url.origin !== self.location.origin || !url.pathname.startsWith(scope)) return;
   // The live worker's scope also covers /dev/; leave those requests to the dev site's own worker
   if (url.pathname.startsWith(`${scope}dev/`)) return;
+  // Videos are fetched in byte ranges (206 responses), which can't be cached: let the browser handle them
+  if (req.headers.has("range") || url.pathname.endsWith(".mp4")) return;
 
   const path = url.pathname.slice(scope.length - 1);
   if (path.startsWith("/_next/static/") || path.startsWith("/icons/")) {
@@ -46,9 +48,9 @@ async function cacheFirst(req) {
   const hit = await caches.match(req);
   if (hit) return hit;
   const res = await fetch(req);
-  if (res.ok) {
+  if (res.status === 200) {
     const cache = await caches.open(STATIC);
-    await cache.put(req, res.clone());
+    await cache.put(req, res.clone()).catch(() => {});
     trim(cache, 300);
   }
   return res;
@@ -58,7 +60,7 @@ async function networkFirst(req, url) {
   const cache = await caches.open(DYNAMIC);
   try {
     const res = await fetch(req);
-        if (res.ok) { await cache.put(req, res.clone()); trim(cache, 300); }
+    if (res.status === 200) { await cache.put(req, res.clone()).catch(() => {}); trim(cache, 300); }
     return res;
   } catch (err) {
     // Offline: same URL, or for pages the same path without the ?query (e.g. /stock/?s=AAPL -> /stock/)

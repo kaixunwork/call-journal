@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import Backup from "@/components/Backup";
 import { deleteCall, dueDate, grade, loadCalls, settleCall } from "@/lib/calls";
 import { isNum, loadIndex, loadStock, money, pct, startAutoRefresh, stockHref, timeAgo } from "@/lib/format";
 
@@ -32,10 +33,13 @@ export default function CallsPage() {
 
   if (calls.length === 0) {
     return (
+      <>
       <div className="card">
         <h1>My calls</h1>
         <p className="muted">No calls yet. <Link href="/">Pick a stock</Link> and make your first one.</p>
       </div>
+      <Backup onRestored={() => setCalls(loadCalls())} />
+      </>
     );
   }
 
@@ -113,6 +117,8 @@ export default function CallsPage() {
           </tbody>
         </table>
       </section>
+
+      <Backup onRestored={() => setCalls(loadCalls())} />
     </>
   );
 }

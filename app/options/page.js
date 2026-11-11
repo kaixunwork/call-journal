@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import Backup from "@/components/Backup";
+import WhatsNew from "@/components/WhatsNew";
+import { BASE } from "@/lib/format";
+import { getOptIn, hasWorker, metricsSummary, setOptIn } from "@/lib/remote";
 import { LESSONS, TOTAL_MINUTES } from "@/lib/lessons";
 import { allDone, doneCount, isUnlocked, loadProgress, loadTrades, resetProgress } from "@/lib/paper";
 
@@ -25,6 +29,18 @@ export default function OptionsHome() {
         A short course for stock investors: {LESSONS.length} lessons, about {TOTAL_MINUTES} minutes. Then see option ideas that follow
         the rules you learned, and paper trade them. No real money, ever.
       </p>
+
+      <WhatsNew />
+
+      {done === 0 && (
+        <section className="card intro">
+          <img src={`${BASE}/brand/logo-mark.svg`} alt="" width="48" height="48" />
+          <div>
+            <strong>New to options?</strong> Start with the lessons below, or read <Link href="/options/welcome/">how this works</Link> first:
+            what the bot does, how it grades itself, and what it won&apos;t do.
+          </div>
+        </section>
+      )}
 
       <section className="card">
         <div className="row" style={{ justifyContent: "space-between" }}>
@@ -58,7 +74,7 @@ export default function OptionsHome() {
         <div className="card">
           <h2>Option ideas</h2>
           <p className="small muted">
-            Calls and puts on large US stocks that pass the six rules from lesson 6, with the analysts&apos; view and a confidence level.
+            Calls and puts on large US stocks that pass the seven rules from lesson 6, with the analysts&apos; view and a confidence level.
             Updated once a day.
           </p>
           {allDone(progress)
@@ -74,6 +90,8 @@ export default function OptionsHome() {
 
       <Timing progress={progress} />
 
+      <Backup onRestored={() => { setProgress(loadProgress()); setTrades(loadTrades().length); }} />
+
       {done > 0 && (
         <p className="small" style={{ textAlign: "right" }}>
           <button className="link" onClick={() => confirm("Start the lessons again? Your paper trades are kept.") && (resetProgress(), setProgress(loadProgress()))}>
@@ -88,18 +106,36 @@ export default function OptionsHome() {
 // How long it took to learn and pick a first option: the measure this feature is judged on
 function Timing({ progress }) {
   const { startedAt, finishedAt, firstTradeAt } = progress;
-  if (!startedAt) return null;
+  const [optIn, setOpt] = useState(false);
+  const [others, setOthers] = useState(null);
+  useEffect(() => {
+    setOpt(getOptIn());
+    if (hasWorker()) metricsSummary().then((m) => m && setOthers(m));
+  }, []);
+  if (!startedAt && !hasWorker()) return null;
   const mins = (a, b) => Math.max(1, Math.round((Date.parse(b) - Date.parse(a)) / 60000));
   return (
     <section className="card stats">
       <div className="stat">
-        <div className="num">{finishedAt ? `${mins(startedAt, finishedAt)} min` : "—"}</div>
+        <div className="num">{startedAt && finishedAt ? `${mins(startedAt, finishedAt)} min` : "—"}</div>
         <div className="small muted">First lesson to last lesson</div>
       </div>
       <div className="stat">
-        <div className="num">{firstTradeAt ? `${mins(startedAt, firstTradeAt)} min` : "—"}</div>
+        <div className="num">{startedAt && firstTradeAt ? `${mins(startedAt, firstTradeAt)} min` : "—"}</div>
         <div className="small muted">First lesson to first paper trade</div>
       </div>
+      {others?.first_trade?.count > 0 && (
+        <div className="stat">
+          <div className="num">{Math.round(others.first_trade.median)} min</div>
+          <div className="small muted">Typical for others (median of {others.first_trade.count})</div>
+        </div>
+      )}
+      {hasWorker() && (
+        <label className="inline-check optin">
+          <input type="checkbox" checked={optIn} onChange={(e) => { setOptIn(e.target.checked); setOpt(e.target.checked); }} />
+          Share my timings anonymously (just the minutes, nothing that identifies me) to help check the course works
+        </label>
+      )}
     </section>
   );
 }

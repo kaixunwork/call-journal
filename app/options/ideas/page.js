@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { CONFIDENCE_LABEL, RULES } from "@/lib/options";
 import { CONSENSUS, loadJson, money, pct, stockHref, timeAgo } from "@/lib/format";
 import { addTrade, allDone, loadProgress, loadTrades } from "@/lib/paper";
+import { hasWorker, liveQuotes } from "@/lib/remote";
 
 export default function IdeasPage() {
   const [data, setData] = useState(null);
@@ -12,11 +13,16 @@ export default function IdeasPage() {
   const [progress, setProgress] = useState(null);
   const [traded, setTraded] = useState(new Set());
   const [level, setLevel] = useState("all");
+  const [live, setLive] = useState(null);
 
   useEffect(() => {
     setProgress(loadProgress());
     setTraded(new Set(loadTrades().map((t) => t.contract)));
-    loadJson("options.json").then(setData).catch((e) => setError(e.message));
+    loadJson("options.json").then((d) => {
+      setData(d);
+      // Live option prices from the small server, when it's set up (otherwise: yesterday's close)
+      if (hasWorker()) liveQuotes(d.suggestions.map((x) => x.contract)).then((q) => q && setLive(q));
+    }).catch((e) => setError(e.message));
   }, []);
 
   if (error) {
@@ -44,7 +50,7 @@ export default function IdeasPage() {
       <p className="small" style={{ margin: "0 0 8px" }}><Link href="/options/">← Learn options</Link></p>
       <h1>Option ideas</h1>
       <p className="muted" style={{ marginTop: 0 }}>
-        The {data.scanned} largest US stocks, checked against the <Link href="/options/lesson/?n=6">six rules</Link>.
+        The {data.scanned} largest US stocks, checked against the <Link href="/options/lesson/?n=6">seven rules</Link>.
         {" "}{data.suggestions.length} pass rules 1–4. Updated {timeAgo(data.updatedAt)}, using prices at the last close
         {data.sources && <> from {sourceText(data.sources)}</>}.
       </p>
@@ -71,7 +77,7 @@ export default function IdeasPage() {
       )}
       {shown.length === 0 && <div className="card muted">No ideas at this confidence level today.</div>}
       {shown.map((s) => (
-        <Idea key={s.contract} s={s} traded={traded.has(s.contract)}
+        <Idea key={s.contract} s={s} live={live?.[s.contract]} delayed={live?.meta?.delayed} traded={traded.has(s.contract)}
           onTrade={(contracts) => { addTrade({ ...s, ideaDate }, contracts); setTraded(new Set([...traded, s.contract])); }} />
       ))}
 
@@ -94,7 +100,7 @@ export default function IdeasPage() {
   );
 }
 
-function Idea({ s, traded, onTrade }) {
+function Idea({ s, live, delayed, traded, onTrade }) {
   const [contracts, setContracts] = useState(1);
   const [err, setErr] = useState("");
   const a = s.analysts;
@@ -124,6 +130,10 @@ function Idea({ s, traded, onTrade }) {
 
       <div className="tiles" style={{ margin: "12px 0" }}>
         <Tile label="Premium" value={money(s.premium, 2, ccy)} sub={`${money(cost, 0, ccy)} per contract · ${s.priceSource === "last" ? "last trade" : `mid of ${money(s.bid, 2, ccy)}–${money(s.ask, 2, ccy)}`}`} />
+        {live && (live.bid > 0 || live.last > 0) && (
+          <Tile label={delayed ? "Now (15 min delay)" : "Now (live)"} value={money(live.bid > 0 && live.ask > 0 ? (live.bid + live.ask) / 2 : live.last, 2, ccy)}
+            sub={live.bid > 0 ? `bid ${money(live.bid, 2, ccy)} · ask ${money(live.ask, 2, ccy)}` : "last trade"} />
+        )}
         <Tile label="Breakeven" value={money(s.breakeven, 2, ccy)} sub={`stock must ${verb} ${pct(Math.abs(s.breakevenMove))}`} />
         <Tile label="Delta" value={s.delta.toFixed(2)} sub={`~${Math.round(s.delta * 100)}% chance it ends in the money`} />
         <Tile label="Days left" value={s.days} sub={`expires ${s.expiry}`} />

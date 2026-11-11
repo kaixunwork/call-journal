@@ -1,0 +1,19 @@
+name = "call-journal-api"
+main = "index.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+# Sandbox = 15-minute delayed quotes, safe token. For real-time, use a LIVE token and
+# set this to "https://api.tradier.com/v1" (see README: a live token is full account access).
+TRADIER_BASE = "https://sandbox.tradier.com/v1"
+# Websites allowed to call this server (comma separated)
+ALLOWED_ORIGINS = "https://kaixunwork.github.io,http://localhost:3000,http://localhost:4000"
+
+# The anonymous timings database. Paste the database_id printed by:
+#   npx wrangler d1 create call-journal-metrics
+[[d1_databases]]
+binding = "DB"
+database_name = "call-journal-metrics"
+database_id = "PASTE-YOUR-DATABASE-ID-HERE"
+
+# The Tradier token is a secret, never in this file:  npx wrangler secret put TRADIER_TOKEN

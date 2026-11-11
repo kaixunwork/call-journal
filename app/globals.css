@@ -256,3 +256,10 @@ a.cta:hover { text-decoration: none; filter: brightness(1.05); }
 .hitbar div.ok { background: var(--up); }
 .hitbar div.bad { background: var(--down); }
 .hitbar span { position: absolute; top: -3px; width: 2px; height: 14px; background: var(--text); }
+.whatsnew { border-color: var(--accent); }
+.whatsnew ul { margin: 8px 0 0; padding-left: 18px; font-size: 14px; }
+.whatsnew li { margin: 4px 0; }
+.intro { display: flex; gap: 14px; align-items: center; font-size: 14px; }
+.intro img { flex: none; }
+.optin { grid-column: 1 / -1; align-items: flex-start; }
+.optin input { margin-top: 3px; }
