@@ -22,7 +22,7 @@ It's a practice journal for building trading judgement before real money is invo
   - Seeking Alpha and Nasdaq news (US)
   - analyst write-ups
   - firm-by-firm rating changes, with a "Big banks" filter (US only)
-- **Stocks page:**
+- **Stocks page** (`/stocks/`; the home page `/` introduces the app):
   - ★ favourites
   - market tabs
   - quick lists: top gainers and losers, most traded, near 52-week high or low, analyst upside, high dividend, low P/E
@@ -157,3 +157,25 @@ Then open http://localhost:4000/call-journal/.
 - A call is graded on the closing price of its check-back date, which is locked in the first time you open My calls after that date.
 - Anything else hosted on your `<username>.github.io` site can read data saved in this browser, including the API key. Use a key with a monthly spend limit.
 - GitHub pauses scheduled jobs in repositories with no activity for 60 days. Re-enable the job from the Actions tab if that happens.
+
+## The bot's self-learning
+
+Every option idea is logged with a prediction before its result: **Y** (expects a profit, positive expected value) or **N** (expects a loss). At expiry each prediction is scored from the stock's closing price. The rules themselves are treated as hypotheses: the one you see is tested alongside 5 variations, kept while its profit calls are right at least half the time (judged after 20), and replaced by the best challenger when they aren't. See `lib/learn.js` for the exact rules.
+
+- The ledger of predictions is saved to the `bot-ledger` branch by each full run (never force-pushed), so its history can't be quietly rewritten. The app shows it at `/options/bot/`.
+- Expected value starts from a model (stock drifting toward the analyst target, swinging as usual) and leans more on the hypothesis's real results as they come in: weight = settled ÷ (settled + 20). Analyst targets run optimistic, so early predictions lean Y; results correct that.
+- Results take 30–75 days to arrive, so the first verdicts come about two months after the first full run.
+
+**Simulation and demo video:** `node scripts/simulate-bot.js` runs the real engine on 40 made-up stocks and writes `public/demo/ledger.json` (shown at `/options/bot/?demo=1`). `node scripts/record-demo.cjs` records `public/demo/bot-demo.mp4` from it (needs the built site served on port 4000, and ffmpeg).
+
+### Jev: decisions with confidence scores
+
+[Jev](https://docs.typesafe.ai) (TypeSafe's decision model) gives each idea an independent Y/N decision with a confidence score (`lib/jev.js`). It sees the idea's facts (option, prices, analysts, rule checks) but not the bot's expected value. Both predictions are logged and scored at expiry; whichever has been right more often over the latest 60 settled ideas (judged after 20) decides the prediction and confidence the app shows. The bot's track record page compares them and checks whether Jev's confidence matches how often it's right.
+
+To turn it on, add the repository secret `TYPESAFE_API_KEY` (from console.typesafe.ai/keys). Optional repository variable `JEV_MODEL` (default `jev-latest`). Without the key, the bot's own expected value decides. Jev is only called from the daily GitHub job (about 20 calls a day), so the key never reaches the website.
+
+### The bot on real history (backtest)
+
+`node scripts/backtest.js` replays the real engine week by week over about 2.5 years of real history for the 40 largest US stocks: real daily closes, each firm's real rating and price target as of each date (rebuilt from Yahoo's dated rating changes, so nothing from the future leaks in), and real outcomes on each expiry day. Option premiums are modelled (Black-Scholes from recent volatility), since expired options' prices aren't freely available. Output: `public/demo/backtest.json`, shown at `/options/backtest/` in three parts: what each idea was based on, whether trades succeeded or went bust, and how the bot changed its rules. `node scripts/record-backtest.cjs` records the walk-through video (built site served on port 4000, ffmpeg).
+
+**Promo video:** `node scripts/record-promo.cjs` records `public/demo/promo.mp4` (shown on `/options/welcome/`) by using the real app: a lesson and its quiz, an idea and why it was picked, a paper trade, the simulated bot replacing failed rules, and the real-history results. It needs fresh data without a Jev key (`npm run data:quick`), the simulation and backtest files, the built site served on port 4000, and ffmpeg.

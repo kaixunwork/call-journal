@@ -9,7 +9,7 @@ import StockView from "@/components/StockView";
 function StockFromQuery() {
   const symbol = (useSearchParams().get("s") || "").trim().toUpperCase();
   if (!/^[A-Z0-9.\-^]{1,15}$/.test(symbol)) {
-    return <div className="card">No stock picked. <Link href="/">Search for one</Link></div>;
+    return <div className="card">No stock picked. <Link href="/stocks/">Search for one</Link></div>;
   }
   return <StockView key={symbol} symbol={symbol} />;
 }

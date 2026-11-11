@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CONFIDENCE_LABEL, RULES, daysTo } from "@/lib/options";
 import { isNum, loadIndex, loadStock, money, pct, startAutoRefresh, stockHref, timeAgo } from "@/lib/format";
-import { deleteTrade, isExpired, loadTrades, settleTrade, tradeResult } from "@/lib/paper";
+import { closeTrade, deleteTrade, isExpired, loadTrades, settleTrade, tradeResult } from "@/lib/paper";
+import { hasWorker, liveQuotes } from "@/lib/remote";
 
 export default function TradesPage() {
   const [trades, setTrades] = useState(null);
   const [index, setIndex] = useState(null);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [live, setLive] = useState(null); // live option quotes, when the small server is set up
 
   useEffect(() => {
     const all = loadTrades();
@@ -26,7 +28,12 @@ export default function TradesPage() {
         if (updated) setTrades(updated);
       }).catch(() => {});
     }
-    return startAutoRefresh(() => load(true));
+    const loadLive = () => {
+      const open = loadTrades().filter((t) => !t.settledAt && !isExpired(t)).map((t) => t.contract);
+      if (hasWorker() && open.length) liveQuotes(open).then((q) => q && setLive(q));
+    };
+    loadLive();
+    return startAutoRefresh(() => { load(true); loadLive(); });
   }, []);
 
   if (!trades) return null;
@@ -41,7 +48,15 @@ export default function TradesPage() {
   }
 
   const prices = Object.fromEntries((index?.stocks || []).map((s) => [s.symbol, s.price]));
-  const rows = trades.map((t) => ({ t, r: tradeResult(t, prices[t.symbol]) }));
+  // Open trades are valued at the live bid (what you'd get selling now) when available, otherwise estimated
+  const rows = trades.map((t) => {
+    const q = live?.[t.contract];
+    if (!t.settledAt && q?.bid > 0) {
+      const pnl = (q.bid - t.premium) * 100 * t.contracts;
+      return { t, r: { value: q.bid, pnl, pnlPct: ((q.bid - t.premium) / t.premium) * 100, settled: false, live: true } };
+    }
+    return { t, r: tradeResult(t, prices[t.symbol]) };
+  });
   const settled = rows.filter((x) => x.r.settled);
   const wins = settled.filter((x) => x.r.pnl > 0).length;
   const totalPnl = settled.reduce((s, x) => s + x.r.pnl, 0);
@@ -53,7 +68,7 @@ export default function TradesPage() {
       <p className="small" style={{ margin: "0 0 8px" }}><Link href="/options/">← Learn options</Link></p>
       <h1>Paper trades</h1>
       <p className="muted" style={{ marginTop: 0 }}>
-        Open trades are <strong>estimated</strong> from the stock&apos;s latest price. At expiry each trade settles exactly, at
+        Open trades are valued at {live ? <>the option&apos;s <strong>{live.meta?.delayed ? "bid (15 minutes delayed)" : "live bid"}</strong> where there is one, otherwise </> : null}<strong>estimated</strong> from the stock&apos;s latest price. At expiry each trade settles exactly, at
         what the option is worth at the expiry-day close. No real money involved.
         {index && <> Prices updated {timeAgo(index.updatedAt)}.</>}
       </p>
@@ -81,13 +96,19 @@ export default function TradesPage() {
                   <span className={t.side === "call" ? "up" : "down"}>{t.side}</span>{" "}
                   {money(t.strike, 2, t.currency)}
                   <div className="small muted">exp {t.expiry} · {t.contracts}× · stock was {money(t.stockAtEntry, 2, t.currency)}</div>
+                  {t.predict && (
+                    <div className="small">
+                      Bot predicted <span className={`yn ${t.predict}`}>{t.predict}</span>{t.hyp ? ` (${t.hyp})` : ""}
+                      {r.settled && <> · result <span className={`yn ${r.pnl > 0 ? "Y" : "N"}`}>{r.pnl > 0 ? "Y" : "N"}</span> {(r.pnl > 0 ? "Y" : "N") === t.predict ? <span className="up">✓ right</span> : <span className="down">✗ wrong</span>}</>}
+                    </div>
+                  )}
                   {t.rulesFailed?.length > 0 && <div className="small muted">failed rule {t.rulesFailed.map((x) => RULES[x]?.n).join(", ")}</div>}
                 </td>
                 <td><span className={`conf ${t.confidence}`}>{cap(t.confidence)}</span></td>
                 <td className="r nowrap">{money(t.premium, 2, t.currency)}</td>
                 <td className="r nowrap">
                   {isNum(r.value) ? money(r.value, 2, t.currency) : index ? "—" : "…"}
-                  <div className="small muted">{r.settled ? `close ${money(t.stockAtExpiry, 2, t.currency)}` : isNum(prices[t.symbol]) ? `stock ${money(prices[t.symbol], 2, t.currency)}` : ""}</div>
+                  <div className="small muted">{r.settled ? (t.closedEarly ? (t.stockAtClose ? `stock ${money(t.stockAtClose, 2, t.currency)}` : "") : `close ${money(t.stockAtExpiry, 2, t.currency)}`) : isNum(prices[t.symbol]) ? `stock ${money(prices[t.symbol], 2, t.currency)}` : ""}</div>
                 </td>
                 <td className={`r nowrap ${isNum(r.pnl) ? sign(r.pnl) : ""}`}>
                   {isNum(r.pnl) ? usd(r.pnl) : "—"}
@@ -95,9 +116,22 @@ export default function TradesPage() {
                 </td>
                 <td className="small">
                   {r.settled
-                    ? <strong className={r.pnl > 0 ? "up" : "down"}>{r.pnl > 0 ? "✓ Made money" : "✗ Lost money"}</strong>
+                    ? <>
+                        <strong className={r.pnl > 0 ? "up" : "down"}>{r.pnl > 0 ? "✓ Made money" : "✗ Lost money"}</strong>
+                        {t.closedEarly && <div className="muted">closed early {t.settledAt.slice(0, 10)}{t.closeSource === "estimate" ? " (estimated price)" : " (live bid)"}</div>}
+                      </>
                     : isExpired(t) ? <span className="muted">Expired, settling…</span>
-                    : <span className="muted">{daysTo(t.expiry)} days left<br />estimate</span>}
+                    : <>
+                        <span className="muted">{daysTo(t.expiry)} days left<br />{r.live ? (live?.meta?.delayed ? "bid, 15 min delay" : "live bid") : "estimate"}</span>
+                        {isNum(r.value) && (
+                          <div><button type="button" className="link inline" onClick={() => {
+                            const msg = `Close your ${t.symbol} ${t.side} now at ${r.live ? "the bid of" : "about"} ${money(r.value, 2, t.currency)} a share${r.live ? "" : " (estimated)"}? ` +
+                              `That locks in ${usd(r.pnl)}. You can't reopen it.`;
+                            if (!confirm(msg)) return;
+                            try { setTrades(closeTrade(t.id, r.value, { stockPrice: prices[t.symbol], source: r.live ? "live" : "estimate" }) || trades); } catch (e) { alert(e.message); }
+                          }}>Close now</button></div>
+                        )}
+                      </>}
                 </td>
                 <td>
                   <button className="link" onClick={() => confirm(`Delete your ${t.symbol} paper trade?`) && setTrades(deleteTrade(t.id))}>Delete</button>
@@ -146,7 +180,7 @@ function Hypothesis({ rows }) {
           ))}
         </tbody>
       </table>
-      <p className="small" style={{ marginBottom: 0 }}>{verdict}</p>
+      <p className="small" style={{ marginBottom: 0 }}>{verdict} The bot runs the same check on all of its own ideas, not just yours: <Link href="/options/bot/">see its track record</Link>.</p>
     </section>
   );
 }

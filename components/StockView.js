@@ -39,7 +39,7 @@ export default function StockView({ symbol }) {
         {error === "not-found"
           ? <>We don&apos;t have data for <strong>{symbol}</strong>. It may not be a US, Hong Kong or Singapore stock, or it may not have traded recently.</>
           : <>Couldn&apos;t load {symbol}. Try refreshing.</>}{" "}
-        <Link href="/">Back to search</Link>
+        <Link href="/stocks/">Back to search</Link>
       </div>
     );
   }
