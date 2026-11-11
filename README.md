@@ -163,3 +163,9 @@ Every option idea is logged with a prediction before its result: **Y** (expects 
 - Results take 30–75 days to arrive, so the first verdicts come about two months after the first full run.
 
 **Simulation and demo video:** `node scripts/simulate-bot.js` runs the real engine on 40 made-up stocks and writes `public/demo/ledger.json` (shown at `/options/bot/?demo=1`). `node scripts/record-demo.cjs` records `public/demo/bot-demo.mp4` from it (needs the built site served on port 4000, and ffmpeg).
+
+### Jev: decisions with confidence scores
+
+[Jev](https://docs.typesafe.ai) (TypeSafe's decision model) gives each idea an independent Y/N decision with a confidence score (`lib/jev.js`). It sees the idea's facts (option, prices, analysts, rule checks) but not the bot's expected value. Both predictions are logged and scored at expiry; whichever has been right more often over the latest 60 settled ideas (judged after 20) decides the prediction and confidence the app shows. The bot's track record page compares them and checks whether Jev's confidence matches how often it's right.
+
+To turn it on, add the repository secret `TYPESAFE_API_KEY` (from console.typesafe.ai/keys). Optional repository variable `JEV_MODEL` (default `jev-latest`). Without the key, the bot's own expected value decides. Jev is only called from the daily GitHub job (about 20 calls a day), so the key never reaches the website.

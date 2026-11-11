@@ -64,6 +64,9 @@ export default function IdeasPage() {
           Ideas from hypothesis <Link href="/options/bot/"><strong>{data.hypothesis.id}</strong></Link>
           {" "}({verdictText(data.hypothesis)}). Each idea carries the bot&apos;s prediction, logged before the result:
           {" "}<strong>Y</strong> = it expects a profit, <strong>N</strong> = it expects a loss.
+          {" "}{data.decider === "Jev"
+            ? <>Decisions and confidence come from <strong>Jev</strong>, a decision model, checked against the bot&apos;s own expected value{data.jev?.settled ? ` (so far Jev ${data.jev.jevRight}/${data.jev.settled} right, the bot ${data.jev.evRight}/${data.jev.settled})` : ""}.</>
+            : <>Decisions and confidence come from the bot&apos;s own expected value{data.jev?.settled ? `, which has the better record (${data.jev.evRight}/${data.jev.settled} right vs Jev ${data.jev.jevRight}/${data.jev.settled})` : ""}.</>}
         </p>
       )}
       {shown.length === 0 && <div className="card muted">No ideas at this confidence level today.</div>}
@@ -113,7 +116,9 @@ function Idea({ s, traded, onTrade }) {
         <div style={{ textAlign: "right" }}>
           {s.predict && <span className={`predict ${s.predict}`} title={s.predict === "Y" ? "The bot predicts this ends in profit" : "The bot predicts this ends in a loss"}>Predicts {s.predict === "Y" ? "Y · profit" : "N · loss"}</span>}{" "}
           <span className={`conf ${s.confidence.level}`}>{CONFIDENCE_LABEL[s.confidence.level]}</span>
-          {s.ev && <div className="small muted" style={{ marginTop: 4 }}>EV {s.ev.value >= 0 ? "+" : ""}{Math.round(s.ev.value * 100)}% · {Math.round(s.ev.winChance * 100)}% chance of profit</div>}
+          {s.decidedBy === "Jev" && <div className="small" style={{ marginTop: 4 }}>Jev: {s.jev.predict} · {Math.round(s.jev.confidence * 100)}% confidence</div>}
+          {s.ev && <div className="small muted" style={{ marginTop: 2 }}>Bot EV {s.ev.value >= 0 ? "+" : ""}{Math.round(s.ev.value * 100)}% · predicts {s.bot?.predict ?? s.predict}</div>}
+          {s.bot && s.jev && s.bot.predict !== s.jev.predict && <div className="small down" style={{ marginTop: 2 }}>Jev and the bot disagree</div>}
         </div>
       </div>
 
@@ -156,7 +161,7 @@ function Idea({ s, traded, onTrade }) {
             </ul>
           )}
 
-          <h3 style={{ marginTop: 12 }}>Expected value and confidence</h3>
+          <h3 style={{ marginTop: 12 }}>Why this decision</h3>
           <ul className="checks compact">
             {s.confidence.reasons.map((r, i) => (
               <li key={i} className={r.ok ? "pass" : "fail"}><span className="mark">{r.ok ? "+" : "–"}</span><span className="small">{r.text}</span></li>

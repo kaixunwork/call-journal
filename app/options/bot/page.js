@@ -128,6 +128,8 @@ function Bot() {
         )}
       </section>
 
+      {!demo && <JevCard data={data} />}
+
       <section className="card">
         <h2>What the bot learned</h2>
         <ul className="events">
@@ -170,6 +172,41 @@ function asOf(data, date) {
     return { ...h, status, verdict, stats: stats(ledger, h.id) };
   });
   return { entries, events, hypotheses, byId: Object.fromEntries(data.hypotheses.map((h) => [h.id, h])) };
+}
+
+// Jev's record against the bot's own expected value, and whether Jev's confidence is honest
+function JevCard({ data }) {
+  const j = data.jev;
+  if (!j || (!j.settled && !j.open)) return null;
+  const pc = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : "—");
+  return (
+    <section className="card">
+      <h2>Jev vs the bot&apos;s own expected value</h2>
+      <p className="small muted" style={{ marginTop: 0 }}>
+        Jev, a decision model, predicts the same ideas independently. Whichever is right more often decides what you see
+        (judged after {MIN_EVIDENCE} settled ideas). Now deciding: <strong>{data.decider === "ev" ? "the bot's expected value" : "Jev"}</strong>.
+        {j.open ? ` ${j.open} of Jev's predictions are still open.` : ""}
+      </p>
+      {j.settled > 0 && (
+        <>
+          <div className="stats" style={{ marginBottom: 12 }}>
+            <div className="stat"><div className="num">{pc(j.jevRight, j.settled)}</div><div className="small muted">Jev right ({j.jevRight}/{j.settled})</div></div>
+            <div className="stat"><div className="num">{pc(j.evRight, j.settled)}</div><div className="small muted">Bot&apos;s EV right ({j.evRight}/{j.settled})</div></div>
+          </div>
+          <h3>Is Jev&apos;s confidence honest?</h3>
+          <table>
+            <thead><tr><th>Jev&apos;s confidence</th><th className="r">Ideas</th><th className="r">Actually right</th></tr></thead>
+            <tbody>
+              {j.buckets.filter((b) => b.n).map((b) => (
+                <tr key={b.from}><td>{Math.round(b.from * 100)}–{Math.round(b.to * 100)}%</td><td className="r">{b.n}</td><td className="r">{pc(b.right, b.n)}</td></tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="small muted" style={{ marginBottom: 0 }}>If the &quot;actually right&quot; column runs well below the confidence band, Jev is overconfident on options.</p>
+        </>
+      )}
+    </section>
+  );
 }
 
 function Verdict({ v }) {

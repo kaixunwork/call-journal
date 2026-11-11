@@ -99,6 +99,10 @@ jobs:
           # TRADIER_TOKEN. Set the repository variable TRADIER_ENV=live only if you use a live token.
           TRADIER_TOKEN: ${{ secrets.TRADIER_TOKEN }}
           TRADIER_ENV: ${{ vars.TRADIER_ENV }}
+          # Jev (TypeSafe) decides Y/N with a confidence on each idea. Repository secret TYPESAFE_API_KEY;
+          # optional repository variable JEV_MODEL (default jev-latest).
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+          JEV_MODEL: ${{ vars.JEV_MODEL }}
 
       - if: steps.mode.outputs.mode == 'full'
         name: Save the bot's ledger

@@ -51,7 +51,7 @@ export default function Welcome() {
           <h2>A bot that grades itself</h2>
           <ul className="w-points">
             <li><strong>It commits before it knows.</strong> Every idea carries a prediction: Y for profit, N for loss. It is logged the day the idea appears.</li>
-            <li><strong>Confidence comes from expected value.</strong> The average profit or loss per trade, first from a pricing model, then more and more from the bot&apos;s own settled results.</li>
+            <li><strong>Two opinions, one judge.</strong> Jev, a decision model, gives each idea a Y or N with a confidence score. The bot works out its own expected value. Both are scored at expiry, and whichever has been right more often decides what you see.</li>
             <li><strong>Rules are hypotheses.</strong> The rule set you see is tested alongside variations. One that keeps being right is kept. One that is wrong too often is replaced by a challenger with a better record.</li>
             <li><strong>No text generation, no editing the past.</strong> It is arithmetic on real prices, and the full record is saved in the project&apos;s public history.</li>
           </ul>

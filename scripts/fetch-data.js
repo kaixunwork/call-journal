@@ -24,8 +24,9 @@ import { listMarket, fetchSpark } from "../lib/universe.js";
 import { fetchNews, fetchAnalystNews } from "../lib/sources.js";
 import { getAnalystsAndStats, getOptionChain, getStatements } from "../lib/yahoo.js";
 import { CONFIDENCE_LABEL, LIMITS } from "../lib/options.js";
-import { emptyLedger, evolve, predict, publicLedger, settle, stats } from "../lib/learn.js";
+import { emptyLedger, evolve, jevStats, predict, publicLedger, settle, stats } from "../lib/learn.js";
 import * as tradier from "../lib/tradier.js";
+import { decide, hasJev, jevLevel } from "../lib/jev.js";
 
 // Options can come from environment variables (GitHub job) or flags (easier on Windows):
 //   --prices  same as MODE=prices        --quick  same as LIMIT=100 (100 stocks per market)
@@ -211,6 +212,7 @@ async function optionIdeas(files, ledger, histories) {
   items.sort((a, b) => a.file.symbol.localeCompare(b.file.symbol)); // same input order every run
   const { shown, skipped } = predict(ledger, items, today);
   for (const e of ledger.events.slice(eventsBefore)) console.log(`  bot: ${e.text}`);
+  await askJev(ledger, shown, today);
 
   const order = { high: 0, medium: 1, low: 2 };
   shown.sort((a, b) => order[a.confidence.level] - order[b.confidence.level] || b.ev.value - a.ev.value);
@@ -219,6 +221,7 @@ async function optionIdeas(files, ledger, histories) {
   await writeFile(new URL("options.json", OUT), JSON.stringify({
     updatedAt, scanned: files.length, sources, limits: LIMITS,
     hypothesis: { id: active.id, params: active.params, verdict: active.verdict, stats: stats(ledger, active.id) },
+    decider: shown.some((x) => x.decidedBy === "Jev") ? "Jev" : "bot", jev: jevStats(ledger),
     suggestions: shown, skipped,
   }));
   await saveLedger(ledger);
@@ -226,6 +229,44 @@ async function optionIdeas(files, ledger, histories) {
   const counts = Object.keys(order).map((l) => `${shown.filter((x) => x.confidence.level === l).length} ${CONFIDENCE_LABEL[l].toLowerCase()}`);
   console.log(`Option ideas from ${active.id}: ${shown.length} (${counts.join(", ")}; ${shown.filter((x) => x.predict === "Y").length} predict profit), ${skipped.length} skipped. ` +
     `Settled ${settledNow} past predictions; ledger holds ${ledger.entries.length}. Chains: ${sources.Tradier} Tradier, ${sources.Yahoo} Yahoo. (${elapsed()})`);
+}
+
+// Jev's independent Y/N decision on each idea. It's logged on the ledger entry (the idea's first day) and
+// scored at expiry. While Jev's record is at least as good as the bot's own, Jev's decision is what you see.
+async function askJev(ledger, shown, today) {
+  if (!hasJev()) { console.log("  Jev: no TYPESAFE_API_KEY set, so the bot's expected value decides."); return; }
+  let asked = 0, failed = 0;
+  await pool(shown, 4, async (idea) => {
+    if (failed >= 5) return; // a bad key fails every call: stop asking
+    try {
+      idea.jev = await decide(idea);
+      asked++;
+    } catch (e) {
+      if (++failed <= 3) console.warn(`  ! ${idea.symbol} Jev: ${e.message}`);
+      return;
+    }
+    const entry = ledger.entries.find((e) => e.hyp === idea.hyp && e.symbol === idea.symbol && e.expiry === idea.expiry && e.date === today);
+    if (entry && !entry.jev) entry.jev = idea.jev;
+  });
+  const jevDecides = (ledger.decider ?? "jev") === "jev";
+  for (const idea of shown) {
+    idea.bot = { predict: idea.predict, confidence: idea.confidence }; // the bot's own call, always kept
+    if (!idea.jev || !jevDecides) { idea.decidedBy = "bot"; continue; }
+    const j = idea.jev;
+    idea.decidedBy = "Jev";
+    idea.predict = j.predict;
+    idea.confidence = {
+      level: jevLevel(j),
+      reasons: [
+        { ok: j.predict === "Y", text: `Jev decides ${j.predict === "Y" ? "Y (profit)" : "N (loss)"} with ${Math.round(j.confidence * 100)}% confidence; ${Math.round((j.pProfit ?? 0) * 100)}% probability of profit` },
+        { ok: idea.bot.predict === j.predict, text: idea.bot.predict === j.predict ? "The bot's own expected value agrees" : `The bot's own expected value disagrees (it says ${idea.bot.predict})` },
+        ...idea.bot.confidence.reasons,
+      ],
+    };
+  }
+  const shownBy = !asked ? "Jev gave no answers, so the bot's expected value is shown"
+    : jevDecides ? "Jev's decisions are shown" : "The bot's expected value is shown (it has the better record)";
+  console.log(`  Jev: decided ${asked} ideas${failed ? `, ${failed} failed` : ""}. ${shownBy}.`);
 }
 
 async function loadLedger(today) {
