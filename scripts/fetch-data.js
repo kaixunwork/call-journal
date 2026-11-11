@@ -4,13 +4,15 @@
 //   MODE=full    (daily, ~45 min)  everything for every stock: price, 6-month chart, key numbers,
 //                                  analyst consensus + price targets, financial statements, news.
 //                                  The largest stocks also get extra news outlets, analyst write-ups
-//                                  and (US) firm-by-firm rating changes.
+//                                  and (US) firm-by-firm rating changes. The largest US stocks also
+//                                  get an options chain, checked against the lesson rules for ideas.
 //   MODE=prices  (every ~15 min during market hours, ~1 min)  refreshes price, daily change and
 //                                  market-value numbers in the files a full run already wrote.
 //
 // Output:
 //   public/data/index.json       every stock (compact rows, used for search and the market lists)
 //   public/data/s/<SYMBOL>.json  one file per stock, read by the stock page
+//   public/data/options.json     option ideas that pass the lesson rules (full runs only)
 //
 // Run locally with:  npm run fetch-data              (full)
 //                    MODE=prices npm run fetch-data  (prices only)
@@ -20,7 +22,9 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { listMarket, fetchSpark } from "../lib/universe.js";
 import { fetchNews, fetchAnalystNews } from "../lib/sources.js";
-import { getAnalystsAndStats, getStatements } from "../lib/yahoo.js";
+import { getAnalystsAndStats, getOptionChain, getStatements } from "../lib/yahoo.js";
+import { CONFIDENCE_LABEL, LIMITS, suggest } from "../lib/options.js";
+import * as tradier from "../lib/tradier.js";
 
 // Options can come from environment variables (GitHub job) or flags (easier on Windows):
 //   --prices  same as MODE=prices        --quick  same as LIMIT=100 (100 stocks per market)
@@ -29,6 +33,7 @@ const MODE = args.includes("--prices") ? "prices" : process.env.MODE || "full";
 const env = (k, d) => (process.env[k] ? Number(process.env[k]) : d);
 const LIMIT = args.includes("--quick") ? 100 : env("LIMIT", Infinity); // per market, for test runs
 const TOP = { US: env("TOP_US", 500), HK: env("TOP_HK", 100), SG: env("TOP_SG", 40) }; // extra-news tier
+const TOP_OPTIONS = env("TOP_OPTIONS", 150); // largest US stocks checked for option ideas
 const CONCURRENCY = env("CONCURRENCY", 6);
 const MIN_TOTAL = LIMIT === Infinity ? 5000 : 1; // below this, assume we're being blocked
 
@@ -114,6 +119,8 @@ async function fullRun() {
   await mkdir(new URL("s/", OUT), { recursive: true });
 
   const rows = [];
+  const forOptions = new Set(stocks.filter((s) => s.market === "US").slice(0, TOP_OPTIONS).map((s) => s.symbol));
+  const optionFiles = [];
   done = 0;
   await pool(stocks, CONCURRENCY, async (s) => {
     const isTop = top.has(s.symbol);
@@ -143,6 +150,7 @@ async function fullRun() {
     };
     await writeFile(fileFor(s.symbol), JSON.stringify(file));
     rows.push(indexRow(s, file));
+    if (forOptions.has(s.symbol) && file.full) optionFiles.push(file);
     progress("stocks", ++done, stocks.length, 250);
     await sleep(100);
   });
@@ -156,6 +164,46 @@ async function fullRun() {
     console.error("Detail failed for over half the stocks. Not publishing this data.");
     process.exit(1);
   }
+
+  await optionIdeas(optionFiles);
+}
+
+// ---- 4. Option ideas: the lesson rules applied to the largest US stocks ----
+// Failing here never stops the run: the options page just says ideas aren't available.
+async function optionIdeas(files) {
+  const useTradier = tradier.hasTradier();
+  console.log(`Checking options for ${files.length} US stocks with ${useTradier ? "Tradier (Yahoo as backup)" : "Yahoo (no TRADIER_TOKEN set)"}… (${elapsed()})`);
+  const suggestions = [];
+  const skipped = [];
+  const sources = { Tradier: 0, Yahoo: 0 };
+  let tradierFails = 0;
+  let done = 0;
+  await pool(files, 4, async (file) => {
+    // Tradier first. If it errors or has no chain for this stock, use Yahoo instead.
+    let chain = null;
+    if (useTradier && tradierFails < 10) {
+      try {
+        chain = await tradier.getOptionChain(file.symbol, LIMITS, file.quote.price);
+      } catch (e) {
+        // A bad token fails every stock: after 10 errors, stop asking Tradier and use Yahoo for the rest
+        if (++tradierFails <= 3 || tradierFails === 10) console.warn(`  ! ${file.symbol} Tradier: ${e.message}${tradierFails === 10 ? " (using Yahoo for the rest)" : ""}`);
+      }
+    }
+    chain ??= await part("options", file.symbol, () => getOptionChain(file.symbol, LIMITS));
+    if (chain) sources[chain.source]++;
+    const result = suggest(file, chain);
+    if (result.skip) skipped.push({ symbol: file.symbol, name: file.quote.name, reason: result.skip });
+    else suggestions.push(result);
+    progress("option chains", ++done, files.length, 50);
+    await sleep(150);
+  });
+  const order = { high: 0, medium: 1, low: 2 };
+  suggestions.sort((a, b) => order[a.confidence.level] - order[b.confidence.level] || b.confidence.score - a.confidence.score ||
+    Math.abs(b.analysts.moveToTarget) - Math.abs(a.analysts.moveToTarget));
+  skipped.sort((a, b) => a.symbol.localeCompare(b.symbol));
+  await writeFile(new URL("options.json", OUT), JSON.stringify({ updatedAt, scanned: files.length, sources, limits: LIMITS, suggestions, skipped }));
+  const counts = Object.keys(order).map((l) => `${suggestions.filter((x) => x.confidence.level === l).length} ${CONFIDENCE_LABEL[l].toLowerCase()}`);
+  console.log(`Option ideas: ${suggestions.length} (${counts.join(", ")}), ${skipped.length} skipped. Chains: ${sources.Tradier} Tradier, ${sources.Yahoo} Yahoo. (${elapsed()})`);
 }
 
 async function pricesOnly() {

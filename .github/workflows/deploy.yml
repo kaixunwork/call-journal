@@ -80,6 +80,10 @@ jobs:
         run: npm run fetch-data
         env:
           MODE: ${{ steps.mode.outputs.mode }}
+          # Option chains: Tradier first, Yahoo as backup. Add a SANDBOX token as the repository secret
+          # TRADIER_TOKEN. Set the repository variable TRADIER_ENV=live only if you use a live token.
+          TRADIER_TOKEN: ${{ secrets.TRADIER_TOKEN }}
+          TRADIER_ENV: ${{ vars.TRADIER_ENV }}
 
       # Keep full-run data for the prices runs that follow
       - if: steps.mode.outputs.mode == 'full'

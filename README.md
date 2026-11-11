@@ -1,4 +1,8 @@
-# Call Journal
+# Starcall
+
+<img src="public/icons/icon-512.png" width="96" alt="Starcall logo: a rising price line that lands on a star">
+
+*Formerly Call Journal. The repository and web address still use `call-journal`.*
 
 Research any US, Hong Kong or Singapore stock, write down your call (bullish or bearish, plus why), and get graded when the check-back date comes.
 It's a practice journal for building trading judgement before real money is involved. It is not investment advice.
@@ -33,9 +37,31 @@ It's a practice journal for building trading judgement before real money is invo
   - It opens full-screen with its own icon, and shows the last data you viewed when you're offline.
 - **Your calls** are saved in your browser, with a scorecard of your hit rate.
 
+## Learn options
+
+The **Options** tab is a short course for stock investors who haven't traded options yet:
+
+1. **Lesson plan**: 7 lessons, about 40 minutes, done in order. Each ends with a quick check, and the next lesson opens once you answer it correctly.
+2. **Option ideas**: once a day, the 150 largest US stocks are checked against the six rules from lesson 6. Each idea shows which rules it passes, the analysts' view (rating, price target, recent rating changes) and a **confidence level** (high, medium or low) with its reasons. Ideas only *buy* calls or puts.
+3. **Paper trades**: record an idea as if you'd bought it. Open trades are estimated from the stock's latest price; at expiry each one settles at what the option is worth at the expiry-day close. The page groups results by confidence level, to check whether high-confidence ideas really do better.
+
+No real money is involved anywhere. Progress and paper trades are saved in your browser, like your calls. The hub page shows how long you took from the first lesson to the last, and to your first paper trade.
+
+**Where option prices come from:** [Tradier](https://docs.tradier.com) first, Yahoo Finance as the backup (`lib/tradier.js`, `lib/yahoo.js`). Tradier keeps each contract's closing bid, ask and open interest after the US close; Yahoo zeroes them, so with Yahoo the ideas use last traded prices. The app works out implied volatility and delta itself (Black-Scholes, in `lib/options.js`) unless Tradier's live API supplies them. Each idea says which source it came from.
+
+To turn Tradier on:
+
+1. Open a Tradier Brokerage account and copy your **sandbox** token from web.tradier.com/user/api. Use the sandbox token, not the live one: the app only reads prices, and a live token gives full access to your brokerage account.
+2. In this repository on GitHub: **Settings → Secrets and variables → Actions → New repository secret**, name `TRADIER_TOKEN`, paste the token.
+3. Start a full run (Actions → Update data and deploy → Run workflow → full). The log line "Chains: N Tradier, M Yahoo" shows which source was used.
+
+Without the secret, or if Tradier fails, the job uses Yahoo automatically. Sandbox data is 15 minutes delayed and has no Greeks, which is fine for a run after the close. To use a live token instead, also add the repository **variable** `TRADIER_ENV` = `live`.
+
+The lesson text is in `lib/lessons.js`. If you change a rule in `lib/options.js`, update lesson 6 to match.
+
 ## Where the data comes from
 
-Free public sources, no sign-ups or API keys: Yahoo Finance (screener, prices, analyst data, financials) and RSS news feeds from Yahoo Finance, Google News, Seeking Alpha and Nasdaq.
+Free public sources, no sign-ups or API keys (except the optional Tradier token for option prices, see above): Yahoo Finance (screener, prices, analyst data, financials) and RSS news feeds from Yahoo Finance, Google News, Seeking Alpha and Nasdaq.
 
 These sources are **unofficial** and meant for personal, non-commercial use. They can change or block requests without warning.
 
@@ -93,11 +119,11 @@ The dev site uses the live site's stock data, so it costs nothing extra to run. 
 
 | Command | What it does | Time |
 |---|---|---|
-| `npm run data:quick` | 100 stocks per market, enough for testing | about 1 minute |
+| `npm run data:quick` | 100 stocks per market, enough for testing (includes option ideas) | about 2 minutes |
 | `npm run data` | All ~9,500 stocks | about 15 minutes |
 | `npm run data:prices` | Refresh prices only, after a full run | about 1 minute |
 
-Changes to the data job (`scripts/fetch-data.js`, `lib/sources.js`, `lib/yahoo.js`, `lib/universe.js`) only take effect on GitHub from `main`, because the dev site reads live data. Test them on your computer with `npm run data:quick` before merging.
+Changes to the data job (`scripts/fetch-data.js`, `lib/sources.js`, `lib/yahoo.js`, `lib/universe.js`, `lib/options.js`, `lib/tradier.js`) only take effect on GitHub from `main`, because the dev site reads live data. Test them on your computer with `npm run data:quick` before merging.
 
 ## Preview the published version locally
 

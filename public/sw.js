@@ -1,11 +1,11 @@
-// Service worker: makes Call Journal installable, fast to open, and usable briefly offline.
+// Service worker: makes Starcall installable, fast to open, and usable briefly offline.
 //
 //   App code (/_next/static, icons): cached forever. Next.js gives these unique file names per build.
 //   Pages and stock data (/data/...):  network first, so you always get the latest prices;
 //                                       the last copy is used when you're offline.
 //   Anything on another site (Anthropic API, news links): never touched.
 
-const VERSION = "v1";
+const VERSION = "v2"; // bumped for the Starcall redesign so the new icons replace the old cached ones
 const scope = new URL(self.registration.scope).pathname; // "/call-journal/" (live) or "/call-journal/dev/"
 // Live and dev share one web address, so cache names include the scope to keep them apart
 const STATIC = `static-${VERSION}:${scope}`;
