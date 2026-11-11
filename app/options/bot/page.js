@@ -7,6 +7,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { BASE, loadJson, timeAgo } from "@/lib/format";
 import { describe, diff, KEEP_AT, MIN_EVIDENCE, stats } from "@/lib/learn";
+import CallsTable from "@/components/CallsTable";
 
 function Bot() {
   const demo = useSearchParams().get("demo") === "1";
@@ -138,6 +139,14 @@ function Bot() {
           ))}
         </ul>
       </section>
+
+      <CallsTable entries={view.entries} hypotheses={view.hypotheses.map((h) => h.id)}
+        note={demo
+          ? "Every paper trade the bot logged in the simulation, as of the replay date, including the variations it tests quietly."
+          : "Every paper trade the bot has logged, including the variations it tests quietly. Open calls are scored when they expire."} />
+      {!demo && (
+        <p className="small muted">For an example with results, see <Link href="/options/backtest/">its calls on 2½ years of real history</Link>.</p>
+      )}
 
       <section className="card table-wrap">
         <h2>Challengers, tested quietly on the same stocks</h2>

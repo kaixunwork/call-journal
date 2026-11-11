@@ -8,6 +8,7 @@ import { BASE, CONSENSUS, money as fmtMoney } from "@/lib/format";
 import { CONFIDENCE_LABEL, RULES } from "@/lib/options";
 import { describe } from "@/lib/learn";
 import { HitRateLine, MonthlyBars, PriceChart } from "@/components/BacktestCharts";
+import CallsTable from "@/components/CallsTable";
 
 const pct = (x, signed = true) => (x == null ? "—" : `${signed && x > 0 ? "+" : ""}${Math.round(x * 100)}%`);
 const money = (n) => fmtMoney(n, 2, "USD");
@@ -143,6 +144,11 @@ export default function Backtest() {
           <Extremes title="Biggest busts" rows={b.worst} />
         </div>
       </section>
+
+      {b.calls && (
+        <CallsTable entries={b.calls} title="Every call it made, on real history"
+          note="The calls of whichever rule set was in charge at the time: what you'd have seen on the ideas page each week. Real stocks, dates and outcomes; premiums modelled." />
+      )}
 
       {/* ---------------- Part 3 ---------------- */}
       <h2 className="part"><span>3</span> How it corrected and improved itself</h2>

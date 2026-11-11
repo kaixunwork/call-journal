@@ -392,3 +392,4 @@ html { scrollbar-color: rgba(140, 150, 255, 0.35) transparent; }
 .chart .bar.bad { fill: var(--down); opacity: 0.85; }
 .chart-tip { position: absolute; transform: translateX(-50%); pointer-events: none; background: var(--card-solid); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; font-size: 12px; white-space: nowrap; z-index: 5; }
 .bt-video { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); background: #05060f; margin-top: 12px; }
+.calls-table .filters select { flex: 0 1 200px; }
