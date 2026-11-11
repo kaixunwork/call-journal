@@ -1,0 +1,53 @@
+/* Landing page for the options feature (/options/welcome/). Uses the app's colour variables, so dark mode works. */
+.welcome { max-width: 860px; margin: 0 auto; }
+.welcome h1 { font-size: clamp(26px, 5vw, 38px); line-height: 1.15; letter-spacing: -0.02em; margin: 18px 0 12px; max-width: 18em; }
+.welcome h2 { font-size: 22px; margin: 0 0 14px; letter-spacing: -0.01em; }
+.welcome h3 { font-size: 16px; margin: 8px 0 6px; }
+.welcome p, .welcome li { color: var(--text); }
+.w-lead { font-size: 17px; color: var(--muted) !important; max-width: 36em; margin: 0 0 20px; }
+
+.w-hero { padding: 24px 0 36px; border-bottom: 1px solid var(--line); }
+.w-logo { display: block; width: 264px; max-width: 80%; height: auto; }
+.w-ctas { display: flex; gap: 10px; flex-wrap: wrap; }
+.w-btn { display: inline-block; font-weight: 600; border-radius: 10px; padding: 11px 18px; border: 1px solid var(--accent); color: var(--accent); background: transparent; }
+.w-btn.primary { background: var(--accent); color: var(--card); }
+.w-btn:hover { text-decoration: none; filter: brightness(1.06); }
+
+.w-section { padding: 36px 0; border-bottom: 1px solid var(--line); }
+
+.w-steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.w-steps li { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.w-steps p { margin: 0; font-size: 14px; color: var(--muted); }
+.w-num { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--card); font-weight: 700; font-size: 14px; }
+
+.w-bot { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; align-items: center; }
+.w-points { padding: 0; margin: 0 0 16px; list-style: none; }
+.w-points li { padding: 8px 0 8px 18px; position: relative; font-size: 15px; }
+.w-points li::before { content: ""; position: absolute; left: 0; top: 16px; width: 7px; height: 7px; background: var(--accent); transform: rotate(45deg); }
+
+.w-loop { width: 100%; max-width: 340px; height: auto; justify-self: center; }
+.w-loop-ring { fill: none; stroke: var(--line); stroke-width: 2; stroke-dasharray: 4 6; }
+.w-loop-arc { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+.w-loop-head { fill: var(--accent); }
+.w-loop-box { fill: var(--card); stroke: var(--line); stroke-width: 1.5; }
+.w-loop-t { fill: var(--text); font: 600 15px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.w-loop-s { fill: var(--muted); font: 12px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.w-loop-c { fill: var(--muted); font: 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+
+.w-honest ul { margin: 0; padding-left: 20px; }
+.w-honest li { padding: 4px 0; }
+.w-honest { background: var(--warn-bg); border: none; border-radius: 12px; padding: 22px 22px 22px; margin: 36px 0; }
+.w-honest h2, .w-honest li { color: var(--warn-text); }
+
+.w-final { padding: 12px 0 24px; text-align: center; }
+.w-final .w-lead { margin: 0 auto 18px; }
+.w-final .w-ctas { justify-content: center; }
+
+@media (max-width: 760px) {
+  .w-steps { grid-template-columns: 1fr; }
+  .w-bot { grid-template-columns: 1fr; }
+  .w-hero { padding-top: 8px; }
+}
+
+.w-video { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); background: #0f1216; margin: 12px 0; }
+.w-video-note { color: var(--muted); font-size: 14px; margin: 4px 0; }

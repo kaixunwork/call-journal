@@ -153,3 +153,13 @@ Then open http://localhost:4000/call-journal/.
 - A call is graded on the closing price of its check-back date, which is locked in the first time you open My calls after that date.
 - Anything else hosted on your `<username>.github.io` site can read data saved in this browser, including the API key. Use a key with a monthly spend limit.
 - GitHub pauses scheduled jobs in repositories with no activity for 60 days. Re-enable the job from the Actions tab if that happens.
+
+## The bot's self-learning
+
+Every option idea is logged with a prediction before its result: **Y** (expects a profit, positive expected value) or **N** (expects a loss). At expiry each prediction is scored from the stock's closing price. The rules themselves are treated as hypotheses: the one you see is tested alongside 5 variations, kept while its profit calls are right at least half the time (judged after 20), and replaced by the best challenger when they aren't. See `lib/learn.js` for the exact rules.
+
+- The ledger of predictions is saved to the `bot-ledger` branch by each full run (never force-pushed), so its history can't be quietly rewritten. The app shows it at `/options/bot/`.
+- Expected value starts from a model (stock drifting toward the analyst target, swinging as usual) and leans more on the hypothesis's real results as they come in: weight = settled ÷ (settled + 20). Analyst targets run optimistic, so early predictions lean Y; results correct that.
+- Results take 30–75 days to arrive, so the first verdicts come about two months after the first full run.
+
+**Simulation and demo video:** `node scripts/simulate-bot.js` runs the real engine on 40 made-up stocks and writes `public/demo/ledger.json` (shown at `/options/bot/?demo=1`). `node scripts/record-demo.cjs` records `public/demo/bot-demo.mp4` from it (needs the built site served on port 4000, and ffmpeg).

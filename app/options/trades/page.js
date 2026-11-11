@@ -81,6 +81,12 @@ export default function TradesPage() {
                   <span className={t.side === "call" ? "up" : "down"}>{t.side}</span>{" "}
                   {money(t.strike, 2, t.currency)}
                   <div className="small muted">exp {t.expiry} · {t.contracts}× · stock was {money(t.stockAtEntry, 2, t.currency)}</div>
+                  {t.predict && (
+                    <div className="small">
+                      Bot predicted <span className={`yn ${t.predict}`}>{t.predict}</span>{t.hyp ? ` (${t.hyp})` : ""}
+                      {r.settled && <> · result <span className={`yn ${r.pnl > 0 ? "Y" : "N"}`}>{r.pnl > 0 ? "Y" : "N"}</span> {(r.pnl > 0 ? "Y" : "N") === t.predict ? <span className="up">✓ right</span> : <span className="down">✗ wrong</span>}</>}
+                    </div>
+                  )}
                   {t.rulesFailed?.length > 0 && <div className="small muted">failed rule {t.rulesFailed.map((x) => RULES[x]?.n).join(", ")}</div>}
                 </td>
                 <td><span className={`conf ${t.confidence}`}>{cap(t.confidence)}</span></td>
@@ -146,7 +152,7 @@ function Hypothesis({ rows }) {
           ))}
         </tbody>
       </table>
-      <p className="small" style={{ marginBottom: 0 }}>{verdict}</p>
+      <p className="small" style={{ marginBottom: 0 }}>{verdict} The bot runs the same check on all of its own ideas, not just yours: <Link href="/options/bot/">see its track record</Link>.</p>
     </section>
   );
 }

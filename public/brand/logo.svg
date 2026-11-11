@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 64" width="330" height="64" role="img" aria-label="Call Journal Options">
+  <style>
+    .t { fill: #15181d; } .o { fill: #2f5bea; }
+    @media (prefers-color-scheme: dark) { .t { fill: #e8ebef; } .o { fill: #7b9bff; } }
+  </style>
+  <rect width="64" height="64" rx="14" fill="#2f5bea"/>
+  <!-- A long call payoff: flat below the strike, then rising. The Call Journal diamond marks the strike. -->
+  <path d="M11 37 H27 L50 14" fill="none" stroke="#fff" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M27 41.5 l4.75 4.75 -4.75 4.75 -4.75 -4.75z" fill="#fff"/>
+  <text x="80" y="31" class="t" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="25" font-weight="700" letter-spacing="-0.3">Call Journal</text>
+  <text x="80" y="55" class="o" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="17" font-weight="600" letter-spacing="2.4">OPTIONS</text>
+</svg>

@@ -239,3 +239,20 @@ a.cta:hover { text-decoration: none; filter: brightness(1.05); }
 .checks .pass .mark { color: var(--up); }
 .checks .fail .mark { color: var(--down); }
 .checks.compact li { padding: 1px 0; }
+.predict { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px; color: #fff; white-space: nowrap; }
+.predict.Y { background: var(--up); }
+.predict.N { background: var(--down); }
+.yn { font-weight: 700; }
+.yn.Y { color: var(--up); }
+.yn.N { color: var(--down); }
+.replay input[type=range] { padding: 0; margin-top: 10px; accent-color: var(--accent); border: none; background: none; }
+.events { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+.events li { padding: 6px 0 6px 10px; border-left: 3px solid var(--line); margin-bottom: 4px; }
+.events li.replaced, .events li.reinforced { border-color: var(--up); }
+.events li.refuted, .events li.retired { border-color: var(--down); }
+.events li.created { color: var(--muted); }
+.hitbar { position: relative; height: 8px; border-radius: 4px; background: var(--line); margin-top: 6px; }
+.hitbar div { height: 100%; border-radius: 4px; transition: width 0.2s; }
+.hitbar div.ok { background: var(--up); }
+.hitbar div.bad { background: var(--down); }
+.hitbar span { position: absolute; top: -3px; width: 2px; height: 14px; background: var(--text); }

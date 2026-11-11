@@ -59,6 +59,13 @@ export default function IdeasPage() {
         ))}
       </div>
 
+      {data.hypothesis && (
+        <p className="small" style={{ marginTop: 0 }}>
+          Ideas from hypothesis <Link href="/options/bot/"><strong>{data.hypothesis.id}</strong></Link>
+          {" "}({verdictText(data.hypothesis)}). Each idea carries the bot&apos;s prediction, logged before the result:
+          {" "}<strong>Y</strong> = it expects a profit, <strong>N</strong> = it expects a loss.
+        </p>
+      )}
       {shown.length === 0 && <div className="card muted">No ideas at this confidence level today.</div>}
       {shown.map((s) => (
         <Idea key={s.contract} s={s} traded={traded.has(s.contract)}
@@ -103,7 +110,11 @@ function Idea({ s, traded, onTrade }) {
           </h2>
           <div className="small muted clip">{s.name} · stock at {money(s.price, 2, ccy)}</div>
         </div>
-        <span className={`conf ${s.confidence.level}`}>{CONFIDENCE_LABEL[s.confidence.level]} ({s.confidence.score}/{s.confidence.of})</span>
+        <div style={{ textAlign: "right" }}>
+          {s.predict && <span className={`predict ${s.predict}`} title={s.predict === "Y" ? "The bot predicts this ends in profit" : "The bot predicts this ends in a loss"}>Predicts {s.predict === "Y" ? "Y · profit" : "N · loss"}</span>}{" "}
+          <span className={`conf ${s.confidence.level}`}>{CONFIDENCE_LABEL[s.confidence.level]}</span>
+          {s.ev && <div className="small muted" style={{ marginTop: 4 }}>EV {s.ev.value >= 0 ? "+" : ""}{Math.round(s.ev.value * 100)}% · {Math.round(s.ev.winChance * 100)}% chance of profit</div>}
+        </div>
       </div>
 
       <div className="tiles" style={{ margin: "12px 0" }}>
@@ -145,7 +156,7 @@ function Idea({ s, traded, onTrade }) {
             </ul>
           )}
 
-          <h3 style={{ marginTop: 12 }}>Why this confidence</h3>
+          <h3 style={{ marginTop: 12 }}>Expected value and confidence</h3>
           <ul className="checks compact">
             {s.confidence.reasons.map((r, i) => (
               <li key={i} className={r.ok ? "pass" : "fail"}><span className="mark">{r.ok ? "+" : "–"}</span><span className="small">{r.text}</span></li>
@@ -189,6 +200,13 @@ function Tile({ label, value, sub }) {
 }
 
 const fmtDate = (d) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+function verdictText(h) {
+  const st = h.stats || {};
+  if (h.verdict === "reinforced") return `reinforced: ${st.yRight} of ${st.yCalls} profit calls right`;
+  if (h.verdict === "refuted") return `refuted: ${st.yRight} of ${st.yCalls} profit calls right; looking for a better one`;
+  return st.yCalls ? `still testing: ${st.yRight} of ${st.yCalls} profit calls right so far` : "still testing: no results yet";
+}
 
 function sourceText({ Tradier = 0, Yahoo = 0 }) {
   if (!Tradier) return "Yahoo Finance";

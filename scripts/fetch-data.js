@@ -23,7 +23,8 @@ import { existsSync } from "node:fs";
 import { listMarket, fetchSpark } from "../lib/universe.js";
 import { fetchNews, fetchAnalystNews } from "../lib/sources.js";
 import { getAnalystsAndStats, getOptionChain, getStatements } from "../lib/yahoo.js";
-import { CONFIDENCE_LABEL, LIMITS, suggest } from "../lib/options.js";
+import { CONFIDENCE_LABEL, LIMITS } from "../lib/options.js";
+import { emptyLedger, evolve, predict, publicLedger, settle, stats } from "../lib/learn.js";
 import * as tradier from "../lib/tradier.js";
 
 // Options can come from environment variables (GitHub job) or flags (easier on Windows):
@@ -36,6 +37,9 @@ const TOP = { US: env("TOP_US", 500), HK: env("TOP_HK", 100), SG: env("TOP_SG", 
 const TOP_OPTIONS = env("TOP_OPTIONS", 150); // largest US stocks checked for option ideas
 const CONCURRENCY = env("CONCURRENCY", 6);
 const MIN_TOTAL = LIMIT === Infinity ? 5000 : 1; // below this, assume we're being blocked
+// The bot's ledger of predictions (lib/learn.js). Kept outside public/data, which each full run replaces;
+// the GitHub job loads it from, and saves it back to, the bot-ledger branch.
+const LEDGER_FILE = new URL(`../${process.env.LEDGER_FILE || "ledger/ledger.json"}`, import.meta.url);
 
 const OUT = new URL("../public/data/", import.meta.url);
 const fileFor = (symbol) => new URL(`s/${symbol}.json`, OUT);
@@ -121,6 +125,9 @@ async function fullRun() {
   const rows = [];
   const forOptions = new Set(stocks.filter((s) => s.market === "US").slice(0, TOP_OPTIONS).map((s) => s.symbol));
   const optionFiles = [];
+  const ledger = await loadLedger(updatedAt.slice(0, 10));
+  const needHistory = new Set(ledger.entries.filter((e) => !e.outcome).map((e) => e.symbol));
+  const histories = {};
   done = 0;
   await pool(stocks, CONCURRENCY, async (s) => {
     const isTop = top.has(s.symbol);
@@ -151,6 +158,7 @@ async function fullRun() {
     await writeFile(fileFor(s.symbol), JSON.stringify(file));
     rows.push(indexRow(s, file));
     if (forOptions.has(s.symbol) && file.full) optionFiles.push(file);
+    if (needHistory.has(s.symbol)) histories[s.symbol] = file.history;
     progress("stocks", ++done, stocks.length, 250);
     await sleep(100);
   });
@@ -165,16 +173,15 @@ async function fullRun() {
     process.exit(1);
   }
 
-  await optionIdeas(optionFiles);
+  await optionIdeas(optionFiles, ledger, histories);
 }
 
-// ---- 4. Option ideas: the lesson rules applied to the largest US stocks ----
+// ---- 4. Option ideas and the bot's learning step ----
 // Failing here never stops the run: the options page just says ideas aren't available.
-async function optionIdeas(files) {
+async function optionIdeas(files, ledger, histories) {
   const useTradier = tradier.hasTradier();
   console.log(`Checking options for ${files.length} US stocks with ${useTradier ? "Tradier (Yahoo as backup)" : "Yahoo (no TRADIER_TOKEN set)"}… (${elapsed()})`);
-  const suggestions = [];
-  const skipped = [];
+  const items = [];
   const sources = { Tradier: 0, Yahoo: 0 };
   let tradierFails = 0;
   let done = 0;
@@ -191,19 +198,48 @@ async function optionIdeas(files) {
     }
     chain ??= await part("options", file.symbol, () => getOptionChain(file.symbol, LIMITS));
     if (chain) sources[chain.source]++;
-    const result = suggest(file, chain);
-    if (result.skip) skipped.push({ symbol: file.symbol, name: file.quote.name, reason: result.skip });
-    else suggestions.push(result);
+    items.push({ file, chain });
     progress("option chains", ++done, files.length, 50);
     await sleep(150);
   });
+
+  // The learning step: score predictions that reached expiry, update the hypotheses, then predict today's ideas
+  const today = updatedAt.slice(0, 10);
+  const settledNow = settle(ledger, histories, today);
+  const eventsBefore = ledger.events.length;
+  evolve(ledger, today);
+  items.sort((a, b) => a.file.symbol.localeCompare(b.file.symbol)); // same input order every run
+  const { shown, skipped } = predict(ledger, items, today);
+  for (const e of ledger.events.slice(eventsBefore)) console.log(`  bot: ${e.text}`);
+
   const order = { high: 0, medium: 1, low: 2 };
-  suggestions.sort((a, b) => order[a.confidence.level] - order[b.confidence.level] || b.confidence.score - a.confidence.score ||
-    Math.abs(b.analysts.moveToTarget) - Math.abs(a.analysts.moveToTarget));
+  shown.sort((a, b) => order[a.confidence.level] - order[b.confidence.level] || b.ev.value - a.ev.value);
   skipped.sort((a, b) => a.symbol.localeCompare(b.symbol));
-  await writeFile(new URL("options.json", OUT), JSON.stringify({ updatedAt, scanned: files.length, sources, limits: LIMITS, suggestions, skipped }));
-  const counts = Object.keys(order).map((l) => `${suggestions.filter((x) => x.confidence.level === l).length} ${CONFIDENCE_LABEL[l].toLowerCase()}`);
-  console.log(`Option ideas: ${suggestions.length} (${counts.join(", ")}), ${skipped.length} skipped. Chains: ${sources.Tradier} Tradier, ${sources.Yahoo} Yahoo. (${elapsed()})`);
+  const active = ledger.hypotheses.find((h) => h.status === "active");
+  await writeFile(new URL("options.json", OUT), JSON.stringify({
+    updatedAt, scanned: files.length, sources, limits: LIMITS,
+    hypothesis: { id: active.id, params: active.params, verdict: active.verdict, stats: stats(ledger, active.id) },
+    suggestions: shown, skipped,
+  }));
+  await saveLedger(ledger);
+  await writeFile(new URL("ledger.json", OUT), JSON.stringify(publicLedger(ledger, updatedAt)));
+  const counts = Object.keys(order).map((l) => `${shown.filter((x) => x.confidence.level === l).length} ${CONFIDENCE_LABEL[l].toLowerCase()}`);
+  console.log(`Option ideas from ${active.id}: ${shown.length} (${counts.join(", ")}; ${shown.filter((x) => x.predict === "Y").length} predict profit), ${skipped.length} skipped. ` +
+    `Settled ${settledNow} past predictions; ledger holds ${ledger.entries.length}. Chains: ${sources.Tradier} Tradier, ${sources.Yahoo} Yahoo. (${elapsed()})`);
+}
+
+async function loadLedger(today) {
+  try {
+    return JSON.parse(await readFile(LEDGER_FILE, "utf8"));
+  } catch {
+    console.log("  No ledger yet: the bot starts fresh with the lesson 6 rules.");
+    return emptyLedger(today);
+  }
+}
+
+async function saveLedger(ledger) {
+  await mkdir(new URL(".", LEDGER_FILE), { recursive: true });
+  await writeFile(LEDGER_FILE, JSON.stringify(ledger, null, 1));
 }
 
 async function pricesOnly() {

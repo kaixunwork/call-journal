@@ -28,7 +28,7 @@ on:
         default: prices
 
 permissions:
-  contents: read
+  contents: write   # only to save the bot's ledger to the bot-ledger branch (full runs)
   pages: write
   id-token: write
 
@@ -76,6 +76,21 @@ jobs:
       - id: pages
         uses: actions/configure-pages@v5
 
+      # The bot's ledger of predictions lives on its own branch, so every prediction and every change
+      # of mind is in git history. Never force-pushed: if loading fails, saving is refused rather than
+      # overwriting the history with a fresh ledger.
+      - if: steps.mode.outputs.mode == 'full'
+        name: Load the bot's ledger
+        run: |
+          REPO="$RUNNER_TEMP/ledger-repo"
+          URL="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          if git clone --quiet --depth 20 --branch bot-ledger "$URL" "$REPO" 2>/dev/null; then
+            mkdir -p ledger && cp "$REPO/ledger.json" ledger/ledger.json && echo "Loaded ledger from bot-ledger"
+          else
+            echo "No bot-ledger branch yet: the bot starts fresh"
+            git init --quiet -b bot-ledger "$REPO" && git -C "$REPO" remote add origin "$URL"
+          fi
+
       - name: Collect stock data
         run: npm run fetch-data
         env:
@@ -84,6 +99,21 @@ jobs:
           # TRADIER_TOKEN. Set the repository variable TRADIER_ENV=live only if you use a live token.
           TRADIER_TOKEN: ${{ secrets.TRADIER_TOKEN }}
           TRADIER_ENV: ${{ vars.TRADIER_ENV }}
+
+      - if: steps.mode.outputs.mode == 'full'
+        name: Save the bot's ledger
+        continue-on-error: true
+        run: |
+          REPO="$RUNNER_TEMP/ledger-repo"
+          [ -f ledger/ledger.json ] || { echo "::warning::No ledger was written"; exit 0; }
+          cp ledger/ledger.json "$REPO/ledger.json"
+          cd "$REPO"
+          git config user.name "call-journal-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ledger.json
+          git diff --cached --quiet && { echo "Ledger unchanged"; exit 0; }
+          git commit --quiet -m "Ledger $(date -u +%Y-%m-%d)"
+          git push --quiet origin bot-ledger || { echo "::warning::Couldn't save the bot's ledger"; exit 1; }
 
       # Keep full-run data for the prices runs that follow
       - if: steps.mode.outputs.mode == 'full'
