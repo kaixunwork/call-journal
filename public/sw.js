@@ -5,14 +5,14 @@
 //                                       the last copy is used when you're offline.
 //   Anything on another site (Anthropic API, news links): never touched.
 
-const VERSION = "v3"; // v2: Starcall icons; v3: options pages cached for offline, videos left to the browser
+const VERSION = "v4"; // v2: Starcall icons; v3: options pages offline; v4: landing page at /, stocks at /stocks/
 const scope = new URL(self.registration.scope).pathname; // "/call-journal/" (live) or "/call-journal/dev/"
 // Live and dev share one web address, so cache names include the scope to keep them apart
 const STATIC = `static-${VERSION}:${scope}`;
 const DYNAMIC = `dynamic-${VERSION}:${scope}`;
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(DYNAMIC).then((c) => c.addAll([scope, `${scope}calls/`, `${scope}stock/`, ...["", "lesson/", "ideas/", "trades/", "bot/", "welcome/"].map((p) => `${scope}options/${p}`)]).catch(() => {})));
+  event.waitUntil(caches.open(DYNAMIC).then((c) => c.addAll([scope, `${scope}stocks/`, `${scope}calls/`, `${scope}stock/`, ...["", "lesson/", "ideas/", "trades/", "bot/", "welcome/"].map((p) => `${scope}options/${p}`)]).catch(() => {})));
   self.skipWaiting();
 });
 

@@ -36,7 +36,7 @@ export default function CallsPage() {
       <>
       <div className="card">
         <h1>My calls</h1>
-        <p className="muted">No calls yet. <Link href="/">Pick a stock</Link> and make your first one.</p>
+        <p className="muted">No calls yet. <Link href="/stocks/">Pick a stock</Link> and make your first one.</p>
       </div>
       <Backup onRestored={() => setCalls(loadCalls())} />
       </>

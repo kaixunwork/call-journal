@@ -22,7 +22,7 @@ It's a practice journal for building trading judgement before real money is invo
   - Seeking Alpha and Nasdaq news (US)
   - analyst write-ups
   - firm-by-firm rating changes, with a "Big banks" filter (US only)
-- **Stocks page:**
+- **Stocks page** (`/stocks/`; the home page `/` introduces the app):
   - ★ favourites
   - market tabs
   - quick lists: top gainers and losers, most traded, near 52-week high or low, analyst upside, high dividend, low P/E

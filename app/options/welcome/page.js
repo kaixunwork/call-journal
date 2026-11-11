@@ -67,7 +67,7 @@ export default function Welcome() {
       <section className="w-section">
         <h2>See how it works</h2>
         <p className="w-video-note">75 seconds, using the real app: a lesson, an idea and why it was picked, a paper trade, the bot replacing rules that failed, and its results on real market history.</p>
-        <video className="w-video" src={`${BASE}/demo/promo.mp4`} controls preload="metadata" playsInline muted width="1280" height="720" />
+        <video className="w-video" src={`${BASE}/demo/promo.mp4`} poster={`${BASE}/demo/promo-poster.jpg`} controls preload="metadata" playsInline muted width="1280" height="720" />
         <p className="w-video-note"><Link href="/options/bot/?demo=1">Replay the simulation yourself →</Link> · <Link href="/options/backtest/">See it on real market history →</Link></p>
       </section>
 
