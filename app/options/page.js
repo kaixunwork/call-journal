@@ -68,7 +68,7 @@ export default function OptionsHome() {
         )}
       </section>
 
-      <p className="small" style={{ marginTop: -8 }}><Link href="/options/welcome/">What is this? Read the overview</Link> · <Link href="/options/bot/">The bot&apos;s track record</Link></p>
+      <p className="small" style={{ marginTop: -8 }}><Link href="/options/welcome/">What is this? Read the overview</Link> · <Link href="/options/backtest/">See it work on real history</Link> · <Link href="/options/bot/">The bot&apos;s track record</Link></p>
 
       <section className="grid">
         <div className="card">

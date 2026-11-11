@@ -68,7 +68,7 @@ export default function Welcome() {
         <h2>Watch it learn</h2>
         <p className="w-video-note">A 50-second simulation: the bot&apos;s first rules lose, it finds a better set from its own paper trades, and switches. Made-up stocks, not real results.</p>
         <video className="w-video" src={`${BASE}/demo/bot-demo.mp4`} controls preload="metadata" playsInline muted width="1280" height="720" />
-        <p className="w-video-note"><Link href="/options/bot/?demo=1">Replay the simulation yourself →</Link></p>
+        <p className="w-video-note"><Link href="/options/bot/?demo=1">Replay the simulation yourself →</Link> · <Link href="/options/backtest/">See it on real market history →</Link></p>
       </section>
 
       <section className="w-section w-honest">
