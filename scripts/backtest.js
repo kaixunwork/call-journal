@@ -210,6 +210,11 @@ out.backtest = {
   firstHypothesis: firstActive, statement: describe(ledger.hypotheses[0].params),
   timeline, monthly: Object.values(monthly).sort((a, b) => a.month.localeCompare(b.month)), examples,
   totals, best: byReturn.slice(0, 5).map(brief), worst: byReturn.slice(-5).reverse().map(brief),
+  // Every call of whichever rule set was in charge when it was made (what you would have seen), newest first
+  calls: ledger.entries.filter((e) => e.hyp === activeAt(e.date)).reverse().map((e) => ({
+    date: e.date, symbol: e.symbol, side: e.side, strike: e.strike, expiry: e.expiry, premium: e.premium, predict: e.predict,
+    confidence: e.confidence, ev: e.ev, outcome: e.outcome, returnPct: e.returnPct ?? null, stockAtExpiry: e.stockAtExpiry ?? null, hyp: e.hyp,
+  })),
 };
 await mkdir(new URL("../public/demo/", import.meta.url), { recursive: true });
 await writeFile(new URL("../public/demo/backtest.json", import.meta.url), JSON.stringify(out));
