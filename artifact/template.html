@@ -1,0 +1,492 @@
+<title>Starcall Options</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@600;800&display=swap">
+<style>
+/* Layout: one long scroll in five stops (learn, an idea, paper trade, the bot's record, the honest part), sticky section nav, cards only where a thing is an object. Starcall is always dark. */
+:root {
+  color-scheme: dark;
+  --bg: #05060f;
+  --panel: #0d0f2a;
+  --panel-2: #121540;
+  --line: rgba(140, 150, 255, 0.18);
+  --fg: #eef1ff;
+  --muted: #9aa3cc;
+  --accent: #22e4ff;
+  --accent-2: #b14dff;
+  --on-accent: #04101a;
+  --up: #2bf5a3;
+  --down: #ff4d6d;
+  --warn-bg: rgba(255, 197, 61, 0.12);
+  --warn-fg: #ffd56b;
+  --font-display: "Orbitron", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  background:
+    radial-gradient(ellipse 70% 40% at 0% 0%, rgba(124, 77, 255, 0.22), transparent 60%),
+    radial-gradient(ellipse 60% 35% at 100% 0%, rgba(34, 228, 255, 0.10), transparent 60%),
+    var(--bg);
+  color: var(--fg);
+  font: 15px/1.6 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 960px; margin: 0 auto; padding-block: 28px 64px; display: grid; gap: 56px; }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2 { font-family: var(--font-display); letter-spacing: 0.04em; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(28px, 5vw, 44px); line-height: 1.15; }
+h2 { font-size: clamp(18px, 2.6vw, 22px); text-transform: uppercase; }
+h3 { font-size: 15px; margin: 0 0 8px; }
+p { margin: 0; max-width: 68ch; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.up { color: var(--up); } .down { color: var(--down); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* hero */
+.hero { display: grid; gap: 18px; }
+.brand { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; }
+.brand small { display: block; font-size: 11px; letter-spacing: 0.32em; color: var(--accent); font-weight: 600; }
+.brand svg { flex: none; }
+.lead { font-size: 17px; color: var(--muted); }
+.facts { display: flex; flex-wrap: wrap; gap: 10px; }
+.fact { border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; font-size: 13px; color: var(--muted); }
+.fact b { color: var(--fg); }
+
+/* section nav */
+nav.steps { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: rgba(5, 6, 15, 0.92); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); margin-inline: -16px; padding: 10px 16px; display: flex; gap: 6px; overflow-x: auto; }
+nav.steps a { white-space: nowrap; text-decoration: none; color: var(--muted); font-size: 13px; padding: 4px 10px; border-radius: 999px; border: 1px solid transparent; }
+nav.steps a:hover { color: var(--fg); border-color: var(--line); }
+section { display: grid; gap: 16px; scroll-margin-top: 64px; }
+.kicker { font-family: var(--font-display); font-size: 12px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; min-width: 0; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+@media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } .grid4 { grid-template-columns: 1fr 1fr; } }
+
+/* buttons */
+button { font: inherit; font-weight: 600; cursor: pointer; border-radius: 10px; padding: 9px 16px; border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent); }
+button.ghost { background: transparent; color: var(--accent); }
+button:disabled { opacity: 0.45; cursor: default; }
+
+/* lessons */
+.lesson-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.lesson-tabs button { background: transparent; color: var(--muted); border-color: var(--line); padding: 5px 12px; font-size: 13px; font-weight: 500; }
+.lesson-tabs button.on { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
+.lesson-tabs button.done::before { content: "✓ "; color: var(--up); }
+.lesson-tabs button.on.done::before { color: var(--on-accent); }
+.lesson-body p { margin: 8px 0; }
+.lesson-body h3 { margin-top: 16px; color: var(--accent); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
+.example { background: var(--panel-2); border-left: 3px solid var(--accent-2); border-radius: 8px; padding: 10px 12px; font-size: 14px; margin: 10px 0; }
+.q { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; display: grid; gap: 8px; }
+.answers { display: grid; gap: 6px; }
+.answers button { text-align: left; background: transparent; color: var(--fg); border-color: var(--line); font-weight: 400; }
+.answers button.right { border-color: var(--up); background: rgba(43, 245, 163, 0.12); }
+.answers button.wrong { border-color: var(--down); background: rgba(255, 77, 109, 0.10); }
+
+/* idea */
+.idea-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+.idea-title { font-family: var(--font-display); font-size: 18px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
+.chip.Y { background: var(--up); color: var(--on-accent); border-color: var(--up); }
+.chip.N { background: var(--down); color: var(--on-accent); border-color: var(--down); }
+.chip.medium { color: var(--accent); border-color: var(--accent); }
+.chip.high { color: var(--up); border-color: var(--up); }
+.chip.low { color: var(--down); border-color: var(--down); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.tile { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.tile .v { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.checks li { display: grid; grid-template-columns: 18px 1fr; gap: 8px; }
+.checks .m { font-weight: 700; }
+.checks .pass .m { color: var(--up); } .checks .fail .m { color: var(--down); }
+
+/* charts */
+.chart { position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart .series { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .grid { stroke: var(--line); }
+.chart .ref { stroke: var(--muted); stroke-dasharray: 4 4; }
+.chart .ref.alt { stroke: var(--accent-2); }
+.chart .lbl { fill: var(--muted); font-size: 11px; font-family: var(--font-body); }
+.chart .mark { stroke: var(--muted); opacity: 0.6; }
+.chart .bar-good { fill: var(--up); } .chart .bar-bad { fill: var(--down); opacity: 0.85; }
+.chart .dot { fill: var(--accent); stroke: var(--bg); stroke-width: 2; }
+.tip { position: absolute; transform: translateX(-50%); pointer-events: none; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 3px 8px; font-size: 12px; white-space: nowrap; top: 0; }
+
+/* paper trade */
+.picker { display: flex; flex-wrap: wrap; gap: 8px; }
+.picker button { background: transparent; color: var(--fg); border-color: var(--line); font-weight: 500; font-size: 13px; }
+.picker button.on { border-color: var(--accent); color: var(--accent); }
+.verdict { border-radius: 12px; padding: 12px 14px; border: 1px solid var(--line); display: grid; gap: 4px; }
+.verdict.good { border-color: var(--up); } .verdict.bad { border-color: var(--down); }
+.verdict .big { font-family: var(--font-display); font-size: 20px; }
+.tally { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+
+/* stats + tables */
+.stat .v { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: var(--font-display); }
+.events { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
+.events li { border-left: 3px solid var(--line); padding: 4px 0 4px 10px; }
+.events li.replaced, .events li.reinforced { border-color: var(--up); }
+.events li.refuted { border-color: var(--down); }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+th { text-align: left; color: var(--muted); font-weight: 500; padding: 6px 8px; font-size: 12px; }
+td { padding: 8px; border-top: 1px solid var(--line); vertical-align: top; }
+td.r, th.r { text-align: right; }
+.filters { display: flex; gap: 8px; flex-wrap: wrap; }
+select { font: inherit; font-size: 13px; color: var(--fg); background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
+.honest { background: var(--warn-bg); border: 1px solid rgba(255, 197, 61, 0.35); color: var(--warn-fg); border-radius: 14px; padding: 18px; }
+.honest ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+footer { color: var(--muted); font-size: 12px; text-align: center; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="brand">
+      <svg width="44" height="44" viewBox="4 4 58 52" aria-hidden="true">
+        <defs>
+          <linearGradient id="trail" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#7c4dff" stop-opacity="0"/><stop offset="0.45" stop-color="#b14dff"/><stop offset="1" stop-color="#22e4ff"/></linearGradient>
+          <radialGradient id="glow"><stop offset="0" stop-color="#22e4ff" stop-opacity="0.7"/><stop offset="1" stop-color="#22e4ff" stop-opacity="0"/></radialGradient>
+        </defs>
+        <circle cx="46" cy="20" r="16" fill="url(#glow)"/>
+        <path d="M8 52 L20 40 L28 45 L42 27" fill="none" stroke="url(#trail)" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M46 7 C47.3 16.2 49.8 18.7 59 20 C49.8 21.3 47.3 23.8 46 33 C44.7 23.8 42.2 21.3 33 20 C42.2 18.7 44.7 16.2 46 7Z" fill="#fff"/>
+      </svg>
+      <div>Starcall<small>Options</small></div>
+    </div>
+    <h1>Learn options. Then watch a bot that has to grade itself.</h1>
+    <p class="lead">For stock investors who have never traded options. Seven short lessons, an idea explained from top to bottom, a paper trade you can play out, and the bot's full record on real market history, losses included.</p>
+    <div class="facts" id="facts"></div>
+  </header>
+
+  <nav class="steps" aria-label="Sections">
+    <a href="#learn">1 · Learn</a>
+    <a href="#idea">2 · An idea, explained</a>
+    <a href="#trade">3 · Paper trade it</a>
+    <a href="#record">4 · How the bot grades itself</a>
+    <a href="#honest">The honest part</a>
+  </nav>
+
+  <section id="learn" aria-labelledby="learn-h">
+    <div class="kicker">Step 1</div>
+    <h2 id="learn-h">Learn options in seven lessons</h2>
+    <p class="muted">Each lesson ends with a quick check. Answer it correctly to unlock the next one. Your progress is kept in this browser.</p>
+    <div class="lesson-tabs" id="lessonTabs"></div>
+    <div class="card lesson-body" id="lesson"></div>
+  </section>
+
+  <section id="idea" aria-labelledby="idea-h">
+    <div class="kicker">Step 2</div>
+    <h2 id="idea-h">One real idea, and why the bot suggested it</h2>
+    <p class="muted" id="ideaIntro"></p>
+    <div class="card" id="ideaCard"></div>
+  </section>
+
+  <section id="trade" aria-labelledby="trade-h">
+    <div class="kicker">Step 3</div>
+    <h2 id="trade-h">Paper trade it and play it out</h2>
+    <p class="muted">Pick one of the bot's real calls, buy it on paper, and watch the stock's real price run to expiry. No money involved.</p>
+    <div class="picker" id="picker"></div>
+    <div class="card" id="tradeCard"></div>
+  </section>
+
+  <section id="record" aria-labelledby="record-h">
+    <div class="kicker">Step 4</div>
+    <h2 id="record-h">How the bot grades and corrects itself</h2>
+    <p class="muted" id="recordIntro"></p>
+    <div class="grid4" id="totals"></div>
+    <p id="lesson1"></p>
+    <div class="card">
+      <h3>Share of its profit calls that came true, by month of expiry</h3>
+      <div class="chart" id="monthly"></div>
+      <p class="small muted">Green: at least half came true. Red: fewer than half. The dashed line is 50%, the bar its rules must clear.</p>
+    </div>
+    <div class="card">
+      <h3>Its active rules' hit rate over time (vertical lines: it switched rules)</h3>
+      <div class="chart" id="hitrate"></div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h3>Every time it changed its mind</h3>
+        <ul class="events" id="events"></ul>
+      </div>
+      <div class="card">
+        <h3>What this run shows about the bot</h3>
+        <ul class="events">
+          <li class="reinforced"><b>It corrected itself.</b> Each time its rules fell below 50% right, it replaced them, and it ended on rules that were holding up.</li>
+          <li class="refuted"><b>It also chased luck.</b> Some challengers took over after a hot streak, then slipped back to 40–48%. With 20–60 trades, the best-looking rule set is often just lucky.</li>
+          <li><b>Right more often is not the same as making money.</b> Some rule sets were right a third of the time yet averaged a profit, because a few winners were large.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card">
+      <div class="idea-head">
+        <h3>Its calls, one by one</h3>
+        <div class="filters">
+          <select id="fStatus" aria-label="Result"><option value="all">All results</option><option value="right">Right</option><option value="wrong">Wrong</option></select>
+          <select id="fSym" aria-label="Stock"><option value="all">All stocks</option></select>
+        </div>
+      </div>
+      <p class="small muted" id="callsSummary"></p>
+      <div class="table-wrap"><table id="calls"><thead><tr><th>Logged</th><th>Option</th><th class="r">Paid</th><th>Called</th><th>Result</th><th class="r">Return</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </section>
+
+  <section id="honest" aria-labelledby="honest-h">
+    <div class="honest">
+      <h2 id="honest-h">The honest part</h2>
+      <ul id="honestList"></ul>
+    </div>
+  </section>
+
+  <footer>Starcall · a practice journal for learning · not investment advice · <a href="https://kaixunwork.github.io/call-journal/">open the full app</a></footer>
+</div>
+
+<script>
+const DATA = /*DATA*/null;
+
+// ---------- helpers ----------
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const rich = (t) => esc(t).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/\*([^*]+)\*/g, "<em>$1</em>").replace(/\n/g, "<br>");
+const usd = (n, d = 2) => (n == null ? "—" : `${n < 0 ? "-" : ""}$${Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d })}`);
+const pct = (x, signed = true) => (x == null ? "—" : `${signed && x > 0 ? "+" : ""}${Math.round(x * 100)}%`);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+const B = DATA.backtest;
+
+// ---------- hero facts ----------
+$("facts").innerHTML = [
+  `<b>${B.universe.length}</b> large US stocks`,
+  `<b>${B.from.slice(0, 7)} → ${B.to.slice(0, 7)}</b> of real history`,
+  `<b>${B.totals.ideas}</b> expired calls, every one scored`,
+].map((t) => `<span class="fact">${t}</span>`).join("");
+
+// ---------- 1. lessons ----------
+const L = DATA.lessons;
+let done = store.get("starcall-artifact-lessons", {});
+let current = Math.max(0, L.findIndex((l) => !done[l.id]));
+if (current < 0 || current >= L.length) current = 0;
+const unlocked = (i) => L.slice(0, i).every((l) => done[l.id]);
+
+function renderTabs() {
+  $("lessonTabs").innerHTML = L.map((l, i) =>
+    `<button type="button" id="tab-${i}" class="${i === current ? "on" : ""} ${done[l.id] ? "done" : ""}" ${unlocked(i) ? "" : "disabled"} aria-pressed="${i === current}">${i + 1}. ${esc(l.title)}</button>`).join("");
+  L.forEach((_, i) => { $("tab-" + i).onclick = () => { current = i; renderLesson(); }; });
+}
+function renderLesson() {
+  const l = L[current];
+  const answers = {};
+  const body = l.sections.map((s) =>
+    `${s.h ? `<h3>${esc(s.h)}</h3>` : ""}${s.p.map((p) => `<p>${rich(p)}</p>`).join("")}${s.example ? `<div class="example"><b>Example</b><br>${rich(s.example)}</div>` : ""}`).join("");
+  const qs = l.check.map((c, qi) =>
+    `<div class="q"><b>${qi + 1}. ${esc(c.q)}</b><div class="answers">${c.options.map((o, oi) => `<button type="button" id="a-${qi}-${oi}">${esc(o)}</button>`).join("")}</div><p class="small" id="fb-${qi}"></p></div>`).join("");
+  $("lesson").innerHTML = `<p class="small muted">Lesson ${current + 1} of ${L.length} · ${l.minutes} min</p><h3 style="font-size:18px;color:var(--fg);text-transform:none;letter-spacing:0">${esc(l.title)}</h3>${body}${qs}<p id="lessonDone" style="margin-top:12px"></p>`;
+  l.check.forEach((c, qi) => c.options.forEach((_, oi) => {
+    $(`a-${qi}-${oi}`).onclick = () => {
+      answers[qi] = oi;
+      c.options.forEach((__, k) => { $(`a-${qi}-${k}`).className = k === oi ? (oi === c.answer ? "right" : "wrong") : ""; });
+      $(`fb-${qi}`).innerHTML = oi === c.answer ? `<span class="up">✓ Right.</span> <span class="muted">${esc(c.why)}</span>` : `<span class="down">✗ Not quite, try again.</span>`;
+      if (l.check.every((cc, k) => answers[k] === cc.answer)) {
+        done[l.id] = true; store.set("starcall-artifact-lessons", done);
+        const next = current + 1 < L.length;
+        $("lessonDone").innerHTML = `<span class="up">✓ Lesson complete.</span> ${next ? `<button type="button" id="nextLesson" style="margin-left:8px">Next: ${esc(L[current + 1].title)}</button>` : `<a href="#idea">All done. See a real idea →</a>`}`;
+        if (next) $("nextLesson").onclick = () => { current++; renderLesson(); $("learn").scrollIntoView({ behavior: "smooth" }); };
+        renderTabs();
+      }
+    };
+  }));
+  renderTabs();
+}
+renderLesson();
+
+// ---------- charts ----------
+const W = 720;
+function priceChart(el, points, { refs = [], marks = [], height = 240, upTo = points.length } = {}) {
+  const H = height, Lp = 8, R = 120, T = 12, Bm = 24;
+  const ys = [...points.map((p) => p.close), ...refs.map((r) => r.y)];
+  const lo = Math.min(...ys) * 0.98, hi = Math.max(...ys) * 1.02;
+  const x = (i) => Lp + (i / Math.max(1, points.length - 1)) * (W - Lp - R);
+  const y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - Bm);
+  const shown = points.slice(0, upTo);
+  const d = shown.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.close).toFixed(1)}`).join("");
+  const idx = (date) => points.findIndex((p) => p.date >= date);
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Stock price">
+    ${refs.map((r) => `<line x1="${Lp}" x2="${W - R}" y1="${y(r.y)}" y2="${y(r.y)}" class="ref ${r.alt ? "alt" : ""}"/><text x="${W - R + 6}" y="${y(r.y) + 4}" class="lbl">${esc(r.label)}</text>`).join("")}
+    ${marks.map((m) => idx(m.date) < 0 ? "" : `<line x1="${x(idx(m.date))}" x2="${x(idx(m.date))}" y1="${T}" y2="${H - Bm}" class="mark"/><text x="${x(idx(m.date))}" y="${H - 6}" text-anchor="middle" class="lbl">${esc(m.label)}</text>`).join("")}
+    <path d="${d}" class="series"/>
+    ${shown.length ? `<circle cx="${x(shown.length - 1)}" cy="${y(shown.at(-1).close)}" r="5" class="dot"/><text x="${Math.min(x(shown.length - 1) + 8, W - R - 70)}" y="${y(shown.at(-1).close) - 8}" class="lbl" style="fill:var(--fg)">${usd(shown.at(-1).close)}</text>` : ""}
+  </svg>`;
+}
+function hover(el, n, xAt, text) {
+  const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; el.append(tip);
+  el.onmousemove = (e) => {
+    const r = el.getBoundingClientRect();
+    const i = Math.max(0, Math.min(n - 1, xAt((e.clientX - r.left) / r.width * W)));
+    tip.hidden = false; tip.textContent = text(i);
+    tip.style.left = `${Math.min(88, Math.max(12, (e.clientX - r.left) / r.width * 100))}%`;
+  };
+  el.onmouseleave = () => { tip.hidden = true; };
+}
+
+// ---------- 2. the idea ----------
+const ex = B.examples.win;
+$("ideaIntro").textContent = `${ex.loggedOn}. ${ex.name} (${ex.symbol}) closed at ${usd(ex.price)}. This is everything the bot knew that day, and nothing from after it.`;
+const ruleNames = DATA.rules;
+$("ideaCard").innerHTML = `
+  <div class="idea-head">
+    <div><div class="idea-title">${ex.symbol} ▲ Buy the ${usd(ex.strike)} call</div><div class="small muted">expires ${ex.expiry} · ${ex.days} days</div></div>
+    <div class="chips"><span class="chip ${ex.predict}">Predicts ${ex.predict === "Y" ? "Y · profit" : "N · loss"}</span><span class="chip ${ex.confidence.level}">${ex.confidence.level} confidence</span></div>
+  </div>
+  <div class="tiles" style="margin:14px 0">
+    <div class="tile"><div class="small muted">Premium</div><div class="v">${usd(ex.premium)}</div><div class="small muted">${usd(ex.premium * 100, 0)} a contract</div></div>
+    <div class="tile"><div class="small muted">Breakeven</div><div class="v">${usd(ex.breakeven)}</div><div class="small muted">stock must rise ${pct(ex.breakevenMove / 100)}</div></div>
+    <div class="tile"><div class="small muted">Delta</div><div class="v">${ex.delta.toFixed(2)}</div><div class="small muted">~${Math.round(ex.delta * 100)}% chance it ends in the money</div></div>
+    <div class="tile"><div class="small muted">Most you can lose</div><div class="v">${usd(ex.premium * 100, 0)}</div><div class="small muted">the whole premium</div></div>
+  </div>
+  <h3>The last 90 days of ${ex.symbol}, with the analysts' average target</h3>
+  <div class="chart" id="ideaChart"></div>
+  <div class="grid2" style="margin-top:14px">
+    <div><h3>Why: the seven rules, checked</h3><ul class="checks">${ex.checks.map((c) => `<li class="${c.pass ? "pass" : "fail"}"><span class="m">${c.pass ? "✓" : "✗"}</span><div><b>Rule ${ruleNames[c.rule].n}: ${esc(ruleNames[c.rule].name)}</b><div class="small muted">${esc(c.detail)}</div></div></li>`).join("")}</ul></div>
+    <div>
+      <h3>What analysts thought that day</h3>
+      <p class="small">${ex.analysts.count} firms rated it in the past year, mostly <b>${ex.analysts.consensus === "strong_buy" ? "Strong buy" : ex.analysts.consensus === "buy" ? "Buy" : ex.analysts.consensus}</b>. Average target <b>${usd(ex.analysts.targetMean)}</b>, ${pct(ex.analysts.moveToTarget / 100)} above the price (range ${usd(ex.analysts.targetLow, 0)}–${usd(ex.analysts.targetHigh, 0)}).</p>
+      <ul class="small" style="padding-left:18px;margin:6px 0 14px">${ex.analysts.recent.map((r) => `<li>${r.date} · ${esc(r.firm)}: ${esc(r.action)}${r.toGrade ? ` → ${esc(r.toGrade)}` : ""}${r.target ? `, target ${usd(r.target, 0)}` : ""}</li>`).join("")}</ul>
+      <h3>Its prediction, logged before the result</h3>
+      <ul class="checks">${ex.confidence.reasons.map((r) => `<li class="${r.ok ? "pass" : "fail"}"><span class="m">${r.ok ? "+" : "–"}</span><span class="small">${esc(r.text)}</span></li>`).join("")}</ul>
+      <p class="small muted" style="margin-top:10px">It expected a profit on average, yet gave only a ${Math.round(ex.ev.winChance * 100)}% chance of making money. Both can be true: options like this often lose some or all of the premium, and sometimes pay several times over.</p>
+    </div>
+  </div>`;
+priceChart($("ideaChart"), ex.chartBefore, { refs: [{ y: ex.analysts.targetMean, label: `target ${usd(ex.analysts.targetMean, 0)}`, alt: true }] });
+hover($("ideaChart"), ex.chartBefore.length, (px) => Math.round((px - 8) / (W - 128) * (ex.chartBefore.length - 1)), (i) => `${ex.chartBefore[i].date}: ${usd(ex.chartBefore[i].close)}`);
+
+// ---------- 3. paper trade ----------
+const TRADES = DATA.tradeable;
+let pick = 0, timer = null;
+let tally = store.get("starcall-artifact-tally", { trades: 0, right: 0, pnl: 0 });
+function renderPicker() {
+  $("picker").innerHTML = TRADES.map((t, i) => `<button type="button" id="pick-${i}" class="${i === pick ? "on" : ""}" aria-pressed="${i === pick}">${t.symbol} ${usd(t.strike, 0)} ${t.side} · ${t.loggedOn}</button>`).join("");
+  TRADES.forEach((_, i) => { $("pick-" + i).onclick = () => { pick = i; clearInterval(timer); renderPicker(); renderTrade(); }; });
+}
+function renderTrade(state = "ready") {
+  const t = TRADES[pick];
+  const won = t.outcome === "Y";
+  $("tradeCard").innerHTML = `
+    <div class="idea-head">
+      <div><div class="idea-title">${t.symbol} ${usd(t.strike)} ${t.side}</div><div class="small muted">bought ${t.loggedOn} for ${usd(t.premium)} a share · expires ${t.expiry} · breakeven ${usd(t.breakeven)}</div></div>
+      <div class="chips"><span class="chip ${t.predict}">Bot predicted ${t.predict === "Y" ? "Y · profit" : "N · loss"}</span></div>
+    </div>
+    <div class="chart" id="tradeChart" style="margin-top:12px"></div>
+    <div id="tradeAction" style="margin-top:12px"></div>
+    <div class="tally" style="margin-top:10px">Your paper trades in this demo: <b>${tally.trades}</b> · bot was right on <b>${tally.right}</b> · total ${tally.pnl >= 0 ? "+" : ""}${usd(tally.pnl, 0)} <button type="button" class="ghost" id="resetTally" style="padding:2px 10px;font-size:12px">Reset</button></div>`;
+  const refs = [{ y: t.strike, label: `strike ${usd(t.strike, 0)}` }, { y: t.breakeven, label: `breakeven ${usd(t.breakeven, 0)}`, alt: true }];
+  const marks = [{ date: t.loggedOn, label: "bought" }, { date: t.path.at(-1).date, label: "expiry" }];
+  $("resetTally").onclick = () => { tally = { trades: 0, right: 0, pnl: 0 }; store.set("starcall-artifact-tally", tally); renderTrade(state); };
+  if (state === "ready") {
+    priceChart($("tradeChart"), t.path, { refs, marks, upTo: 1 });
+    $("tradeAction").innerHTML = `<button type="button" id="buy">Paper trade it · ${usd(t.premium * 100, 0)}</button> <span class="small muted" style="margin-left:8px">then watch ${t.path.length} trading days play out</span>`;
+    $("buy").onclick = () => play(t, refs, marks);
+  } else {
+    priceChart($("tradeChart"), t.path, { refs, marks });
+    const pnl = (t.value - t.premium) * 100;
+    $("tradeAction").innerHTML = `<div class="verdict ${won ? "good" : "bad"}"><div class="big ${won ? "up" : "down"}">${won ? "✓ Success" : "✗ Bust"} · ${pct(t.returnPct)}</div>
+      <div class="small">On ${t.expiry} ${t.symbol} closed at <b>${usd(t.stockAtExpiry)}</b>, so the option was worth <b>${usd(t.value)}</b> against ${usd(t.premium)} paid: ${pnl >= 0 ? "+" : ""}${usd(pnl, 0)} a contract.</div>
+      <div class="small">The bot predicted ${t.predict}. It was <b class="${t.predict === t.outcome ? "up" : "down"}">${t.predict === t.outcome ? "right" : "wrong"}</b>, and that result counts toward judging its rules.</div></div>`;
+  }
+}
+function play(t, refs, marks) {
+  let i = 1;
+  $("tradeAction").innerHTML = `<span class="small muted">Playing out…</span>`;
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const finish = () => {
+    clearInterval(timer);
+    tally.trades++; if (t.predict === t.outcome) tally.right++; tally.pnl += (t.value - t.premium) * 100;
+    store.set("starcall-artifact-tally", tally);
+    renderTrade("done");
+  };
+  if (reduce) return finish();
+  timer = setInterval(() => {
+    i++;
+    priceChart($("tradeChart"), t.path, { refs, marks, upTo: i });
+    if (i >= t.path.length) finish();
+  }, 70);
+}
+renderPicker(); renderTrade();
+
+// ---------- 4. the record ----------
+const T = B.totals;
+$("recordIntro").textContent = `The bot's real engine, replayed week by week from ${B.from} to ${B.to} on ${B.universe.length} of the largest US stocks. Every call was logged before its result and scored at expiry from the real closing price.`;
+$("totals").innerHTML = [
+  [T.ideas, "profit calls that have expired", ""],
+  [`${Math.round((T.wins / T.ideas) * 100)}%`, `made money (${T.wins})`, T.wins / T.ideas >= 0.5 ? "up" : "down"],
+  [pct(T.avgReturn), "average return", T.avgReturn >= 0 ? "up" : "down"],
+  [pct(T.medianReturn), "typical (median) return", T.medianReturn >= 0 ? "up" : "down"],
+].map(([v, l, c]) => `<div class="card stat"><div class="v ${c}">${v}</div><div class="small muted">${l}</div></div>`).join("");
+$("lesson1").innerHTML = `<b>The lesson of buying options in one line:</b> the average was ${pct(T.avgReturn)}, but the typical trade returned ${pct(T.medianReturn)}, and ${T.wipeouts} of ${T.ideas} (${Math.round((T.wipeouts / T.ideas) * 100)}%) lost everything. A few big winners carry the rest.`;
+
+(function monthly() {
+  const M = B.monthly, H = 220, Lp = 34, R = 8, Tp = 10, Bm = 26, bw = (W - Lp - R) / M.length;
+  const y = (v) => Tp + (1 - v) * (H - Tp - Bm);
+  $("monthly").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Monthly hit rate">
+    ${[0, 0.25, 0.5, 0.75, 1].map((g) => `<line x1="${Lp}" x2="${W - R}" y1="${y(g)}" y2="${y(g)}" class="${g === 0.5 ? "ref" : "grid"}"/><text x="${Lp - 6}" y="${y(g) + 4}" text-anchor="end" class="lbl">${g * 100}%</text>`).join("")}
+    ${M.map((m, i) => { const r = m.wins / m.ideas, h = Math.max(2, (H - Tp - Bm) * r), bx = Lp + i * bw + 1;
+      return `<rect x="${bx}" y="${y(0) - h}" width="${bw - 3}" height="${h}" rx="3" class="${r >= 0.5 ? "bar-good" : "bar-bad"}"/>${i % 3 === 0 ? `<text x="${bx + bw / 2}" y="${H - 8}" text-anchor="middle" class="lbl">${m.month.slice(2).replace("-", "/")}</text>` : ""}`; }).join("")}
+  </svg>`;
+  hover($("monthly"), M.length, (px) => Math.floor((px - Lp) / bw), (i) => `${M[i].month}: ${M[i].wins} of ${M[i].ideas} right · avg ${Math.round((M[i].sumReturn / M[i].ideas) * 100)}%`);
+})();
+
+(function hitrate() {
+  const pts = B.timeline, H = 220, Lp = 34, R = 8, Tp = 14, Bm = 24, lo = 0.2, hi = 0.75;
+  const x = (i) => Lp + (i / Math.max(1, pts.length - 1)) * (W - Lp - R);
+  const y = (v) => Tp + (1 - (Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo)) * (H - Tp - Bm);
+  const d = pts.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.r).toFixed(1)}`).join("");
+  const at = (date) => pts.findIndex((p) => p.d >= date);
+  $("hitrate").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Hit rate over time">
+    ${[0.25, 0.5, 0.75].map((g) => `<line x1="${Lp}" x2="${W - R}" y1="${y(g)}" y2="${y(g)}" class="${g === 0.5 ? "ref" : "grid"}"/><text x="${Lp - 6}" y="${y(g) + 4}" text-anchor="end" class="lbl">${g * 100}%</text>`).join("")}
+    ${DATA.switches.map((s, k) => at(s.date) < 0 ? "" : `<line x1="${x(at(s.date))}" x2="${x(at(s.date))}" y1="${Tp}" y2="${H - Bm}" class="mark"/><text x="${x(at(s.date)) + 4}" y="${Tp + 10 + (k % 2) * 14}" class="lbl">${s.hyp}</text>`).join("")}
+    <path d="${d}" class="series"/>
+    <text x="${Lp}" y="${H - 6}" class="lbl">${pts[0].d.slice(0, 7)}</text><text x="${W - R}" y="${H - 6}" text-anchor="end" class="lbl">${pts.at(-1).d.slice(0, 7)}</text>
+  </svg>`;
+  hover($("hitrate"), pts.length, (px) => Math.round((px - Lp) / (W - Lp - R) * (pts.length - 1)), (i) => `${pts[i].d}: ${pts[i].h} right on ${Math.round(pts[i].r * 100)}% of its last ${pts[i].n} profit calls`);
+})();
+
+$("events").innerHTML = DATA.events.map((e) => `<li class="${e.type}"><span class="small muted">${e.date}</span> ${esc(e.text)}</li>`).join("");
+
+const syms = [...new Set(DATA.calls.map((c) => c.symbol))].sort();
+$("fSym").innerHTML += syms.map((s) => `<option value="${s}">${s}</option>`).join("");
+let shownRows = 25;
+function renderCalls() {
+  const fs = $("fStatus").value, sy = $("fSym").value;
+  const rows = DATA.calls.filter((c) => (fs === "all" || (fs === "right") === (c.outcome === c.predict)) && (sy === "all" || c.symbol === sy));
+  const right = rows.filter((c) => c.outcome === c.predict).length;
+  $("callsSummary").innerHTML = `${rows.length} settled call${rows.length === 1 ? "" : "s"} · <b class="${right / Math.max(1, rows.length) >= 0.5 ? "up" : "down"}">${right} right (${rows.length ? Math.round((right / rows.length) * 100) : 0}%)</b>`;
+  $("calls").tBodies[0].innerHTML = rows.slice(0, shownRows).map((c) => `<tr>
+    <td>${c.date}<div class="small muted">${c.hyp}</div></td>
+    <td><b>${c.symbol}</b> <span class="${c.side === "call" ? "up" : "down"}">${c.side}</span> ${c.strike}<div class="small muted">expires ${c.expiry}</div></td>
+    <td class="r">${usd(c.premium)}</td>
+    <td><b class="${c.predict === "Y" ? "up" : "down"}">${c.predict}</b> ${c.predict === "Y" ? "profit" : "loss"}<div class="small muted">${c.confidence}</div></td>
+    <td><b class="${c.outcome === "Y" ? "up" : "down"}">${c.outcome}</b> ${c.outcome === c.predict ? '<span class="up">✓</span>' : '<span class="down">✗</span>'}<div class="small muted">stock ${c.stockAtExpiry}</div></td>
+    <td class="r ${c.returnPct > 0 ? "up" : "down"}">${pct(c.returnPct)}</td></tr>`).join("") +
+    (rows.length > shownRows ? `<tr><td colspan="6" style="text-align:center"><button type="button" class="ghost" id="moreRows">Show 25 more</button></td></tr>` : "");
+  if ($("moreRows")) $("moreRows").onclick = () => { shownRows += 25; renderCalls(); };
+}
+$("fStatus").onchange = $("fSym").onchange = () => { shownRows = 25; renderCalls(); };
+renderCalls();
+
+// ---------- honest part ----------
+$("honestList").innerHTML = [
+  "Paper trading only. Nothing here places a real order, and nothing here is investment advice.",
+  ...B.modelled.map((m) => `Modelled: ${m}.`),
+  ...B.biases.map((b) => `${b}.`),
+  "Buying an option can lose 100% of what you pay, and often does. Past results don't predict future ones.",
+].map((t) => `<li>${esc(t)}</li>`).join("");
+</script>
